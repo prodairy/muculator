@@ -42,9 +42,9 @@ MuculatorEditor::MuculatorEditor (MuculatorProcessor& p)
     hostSync.onClick = [this]
     {
         state.setProperty (hostSyncId, hostSync.getToggleState(), nullptr);
-        lastHostBpm = -1;
-        timerCallback();
+        applyHostTempo (true);
         updateTopBar();
+        repaint();
     };
 
     for (auto* c : std::initializer_list<juce::Component*> { &bpmField, &minus, &plus, &tapButton, &chainButton, &hostSync, &moduleButtons })
@@ -103,6 +103,7 @@ void MuculatorEditor::selectModule (int index)
     for (int i = 0; i < (int) modules.size(); ++i)
         modules[(size_t) i]->setVisible (i == current);
     resized();
+    applyHostTempo (true); // CHAIN off: the newly shown module must follow the host too
     modules[(size_t) current]->refresh();
     updateTopBar();
     repaint();
@@ -203,15 +204,32 @@ void MuculatorEditor::tap()
     setBpmTextFor (currentId(), bpmToText (juce::jlimit (calc::kMinBpm, calc::kMaxBpm, 60000.0 / avg)));
 }
 
-void MuculatorEditor::timerCallback()
+void MuculatorEditor::applyHostTempo (bool force)
 {
     const double host = proc.getHostBpm();
-    if ((bool) state[hostSyncId] && host > 0 && std::abs (host - lastHostBpm) > 1e-4)
-    {
-        lastHostBpm = host;
+    if (! (bool) state[hostSyncId] || host <= 0)
+        return;
+    if (! force && std::abs (host - lastHostBpm) <= 1e-4)
+        return;
+    lastHostBpm = host;
+    if (bpmTextFor (currentId()) != bpmToText (host))
         setBpmTextFor (currentId(), bpmToText (host));
-    }
+}
+
+bool MuculatorEditor::hostIdle() const
+{
+    return proc.getHostBpm() > 0 && proc.msSinceLastBlock() > 1000;
+}
+
+void MuculatorEditor::timerCallback()
+{
+    applyHostTempo (false);
     repaint (hostArea);
+    if (const bool idle = hostIdle(); idle != wasIdle)
+    {
+        wasIdle = idle;
+        repaint (footer);
+    }
 }
 
 void MuculatorEditor::updateTopBar()
@@ -271,10 +289,18 @@ void MuculatorEditor::paint (juce::Graphics& g)
     drawScreen (g, h.toFloat());
     const double host = proc.getHostBpm();
     const bool synced = (bool) state[hostSyncId];
+    const bool idle = hostIdle();
     auto ledArea = h.removeFromLeft (20).toFloat();
-    drawLed (g, ledArea.withSizeKeepingCentre (8, 8).translated (4, 0), col::ledGreen, synced && host > 0);
+    drawLed (g, ledArea.withSizeKeepingCentre (8, 8).translated (4, 0), col::ledGreen, synced && host > 0 && ! idle);
+    if (idle)
+    {
+        // Last tempo stays visible but dimmed; the host is not running the plugin right now.
+        g.setFont (ledFont (11.0f));
+        g.setColour (col::ledAmber);
+        g.drawText ("IDLE", h.removeFromRight (40).withTrimmedRight (6), juce::Justification::centredRight);
+    }
     g.setFont (ledFont (17.0f));
-    g.setColour (host > 0 ? col::ledGreen : col::silkDim);
+    g.setColour (host <= 0 ? col::silkDim : idle ? col::ledGreen.withAlpha (0.35f) : col::ledGreen);
     g.drawText (host > 0 ? juce::String (host, 2) : juce::String ("-- no host --"), h.reduced (6, 0), juce::Justification::centred);
 
     // module strip label
@@ -283,6 +309,15 @@ void MuculatorEditor::paint (juce::Graphics& g)
     g.drawText ("MODULE", moduleStrip.withWidth (60), juce::Justification::centredLeft);
 
     // footer
+    if (synced && idle)
+    {
+        g.setColour (col::ledAmber);
+        g.setFont (labelFont (10.5f));
+        g.drawText ("HOST IDLE: some hosts pause plugins on silent tracks. Select or record-arm this track, "
+                    "or press Play on a track that has a region.",
+                    footer, juce::Justification::centredLeft);
+        return;
+    }
     g.setColour (col::silkDim);
     g.setFont (labelFont (10.0f, false));
     g.drawText ("A4 = 440 Hz  |  C4 = MIDI 60  |  audio passes through untouched", footer, juce::Justification::centredLeft);
