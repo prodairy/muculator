@@ -56,6 +56,7 @@ MuculatorEditor::MuculatorEditor (MuculatorProcessor& p)
     selectModule ((int) state.getProperty (moduleId, 3));
     state.addListener (this);
 
+    lastSampleRate = hostSampleRate();
     setSize (1000, 680);
     startTimerHz (15);
 }
@@ -224,6 +225,13 @@ bool MuculatorEditor::hostIdle() const
 void MuculatorEditor::timerCallback()
 {
     applyHostTempo (false);
+    if (const double sr = hostSampleRate(); sr != lastSampleRate)
+    {
+        // Modules whose sample-rate field follows the host pick up the new rate.
+        lastSampleRate = sr;
+        for (auto& m : modules)
+            m->refresh();
+    }
     repaint (hostArea);
     if (const bool idle = hostIdle(); idle != wasIdle)
     {

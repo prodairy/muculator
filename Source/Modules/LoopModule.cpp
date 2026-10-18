@@ -26,10 +26,13 @@ LoopModule::LoopModule (ModuleContext& c) : ModuleBase ("loop", "Loop / Bar Leng
 
     for (auto* comp : std::initializer_list<juce::Component*> { &bars, &beats, &rate, &beatUnit, &hostRate, &out, &table })
         addAndMakeVisible (comp);
-    for (auto* f : { &bars, &beats, &rate })
+    for (auto* f : { &bars, &beats })
         f->onChange = [this] { refresh(); };
-    hostRate.onClick = [this] { rate.setText (juce::String (ctx.hostSampleRate(), 0)); refresh(); };
-    hostRate.setTooltip ("Use the host / audio device sample rate");
+    // Typing a rate stops following the host; HOST SR (lit) follows it again.
+    rate.onChange = [this] { hostRate.setToggleState (false, juce::dontSendNotification); state().setProperty ("rateHost", false, nullptr); refresh(); };
+    hostRate.setToggleState ((bool) s.getProperty ("rateHost", true), juce::dontSendNotification);
+    hostRate.onClick = [this] { state().setProperty ("rateHost", hostRate.getToggleState(), nullptr); refresh(); };
+    hostRate.setTooltip ("Lit: follow the host / audio device sample rate");
 
     out.setLineHeight (26.0f);
     table.setColumns ({ "BARS", "MS", "SECONDS", "SAMPLES", "M:SS.cc" }, { 0.55f, 1.3f, 1.0f, 1.4f, 1.25f });
@@ -38,6 +41,9 @@ LoopModule::LoopModule (ModuleContext& c) : ModuleBase ("loop", "Loop / Bar Leng
 
 void LoopModule::refresh()
 {
+    if (hostRate.getToggleState())
+        rate.setText (juce::String (ctx.hostSampleRate(), 0));
+
     Validator v;
     const auto b = bpm();
     v.add (b);

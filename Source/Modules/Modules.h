@@ -118,7 +118,7 @@ private:
     ui::LedField eqCentre { "Centre", "Hz" }, eqQ { "Q" }, eqOct { "Bandwidth", "oct" };
     ui::LedReadout eqOut;
     ui::LedField tMs { "Time", "ms" }, tHz { "Frequency", "Hz" }, tSamples { "Samples", "smp" }, tRate { "Sample rate", "Hz" };
-    ui::IllumButton tHostRate { "HOST SR", ui::col::capGreen, false };
+    ui::IllumButton tHostRate { "HOST SR", ui::col::capGreen, true };
     ui::LedReadout tOut;
     ui::LedField dMetres { "Distance", "m" }, dMs { "Delay", "ms" }, dTemp { "Air temp", "C" };
     ui::LedReadout dOut;
@@ -139,7 +139,7 @@ private:
     void layoutContent (juce::Rectangle<int>) override;
     ui::LedField bars { "Bars" }, beats { "Beats / bar" }, rate { "Sample rate", "Hz" };
     juce::ComboBox beatUnit;
-    ui::IllumButton hostRate { "HOST SR", ui::col::capGreen, false };
+    ui::IllumButton hostRate { "HOST SR", ui::col::capGreen, true };
     ui::LedReadout out;
     ui::LedTable table;
     juce::Rectangle<int> inputArea, outArea, tableArea;

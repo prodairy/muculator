@@ -59,6 +59,7 @@ private:
     std::vector<double> tapTimes;
     double lastHostBpm = -1;
     bool wasIdle = false;
+    double lastSampleRate = 0;
     juce::Rectangle<int> topBar, logoArea, hostArea, moduleStrip, contentArea, footer;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (MuculatorEditor)

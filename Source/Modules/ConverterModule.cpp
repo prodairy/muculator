@@ -57,12 +57,25 @@ ConverterModule::ConverterModule (ModuleContext& c) : ModuleBase ("convert", "Co
     tMs.onChange       = [this] { updateTime (Src::A); publishErrors(); };
     tHz.onChange       = [this] { updateTime (Src::B); publishErrors(); };
     tSamples.onChange  = [this] { updateTime (Src::C); publishErrors(); };
-    tRate.onChange     = [this] { updateTime (Src::None); publishErrors(); };
+    tRate.onChange     = [this]
+    {
+        // Typing a rate stops following the host; HOST SR (lit) follows it again.
+        tHostRate.setToggleState (false, juce::dontSendNotification);
+        state().setProperty ("tRateHost", false, nullptr);
+        updateTime (Src::None);
+        publishErrors();
+    };
     dMetres.onChange   = [this] { updateDistance (Src::A); publishErrors(); };
     dMs.onChange       = [this] { updateDistance (Src::B); publishErrors(); };
     dTemp.onChange     = [this] { updateDistance (Src::None); publishErrors(); };
-    tHostRate.onClick  = [this] { tRate.setText (clean (ctx.hostSampleRate(), 0)); updateTime (Src::None); publishErrors(); };
-    tHostRate.setTooltip ("Use the host / audio device sample rate");
+    tHostRate.setToggleState ((bool) s.getProperty ("tRateHost", true), juce::dontSendNotification);
+    tHostRate.onClick  = [this]
+    {
+        state().setProperty ("tRateHost", tHostRate.getToggleState(), nullptr);
+        updateTime (Src::None);
+        publishErrors();
+    };
+    tHostRate.setTooltip ("Lit: follow the host / audio device sample rate");
 
     for (auto* r : { &gainOut, &eqOut, &tOut, &dOut })
         r->setLineHeight (20.0f);
@@ -76,8 +89,9 @@ ConverterModule::ConverterModule (ModuleContext& c) : ModuleBase ("convert", "Co
 
 void ConverterModule::refresh()
 {
-    // Only the time panel depends on BPM (note-value hint); keep other panels as typed.
+    // Time and distance depend on BPM / sample rate; keep the other panels as typed.
     updateTime (Src::None);
+    updateDistance (Src::None);
     publishErrors();
 }
 
@@ -153,6 +167,9 @@ void ConverterModule::updateEq (Src src)
 
 void ConverterModule::updateTime (Src src)
 {
+    if (tHostRate.getToggleState())
+        tRate.setText (clean (ctx.hostSampleRate(), 0));
+
     Validator v;
     const auto sr = v.num (tRate, "Sample rate", 1000, 768000);
     for (auto* f : { &tMs, &tHz, &tSamples }) f->setInvalid (false);
