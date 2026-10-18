@@ -4,6 +4,20 @@ namespace ui
 {
 juce::String str (const std::string& s) { return juce::String::fromUTF8 (s.c_str()); }
 
+juce::String copyableValue (const juce::String& shown)
+{
+    auto tokens = juce::StringArray::fromTokens (shown.trim(), " ", {});
+    tokens.removeEmptyStrings();
+    if (tokens.size() == 0 || tokens.size() > 2)
+        return shown.trim();
+    const auto& first = tokens[0];
+    const bool numeric = first.containsOnly ("+-0123456789.") && first.containsAnyOf ("0123456789")
+                         && calc::parseNumber (first.toStdString(), {}).ok();
+    if (! numeric)
+        return shown.trim();
+    return first.trimCharactersAtStart ("+");
+}
+
 //==============================================================================
 IllumButton::IllumButton (const juce::String& text, juce::Colour cap, bool toggles)
     : juce::TextButton (text)
@@ -245,15 +259,20 @@ void NotePicker::resized()
 }
 
 //==============================================================================
+LedReadout::LedReadout()
+{
+    setTooltip ("Click a value to copy it");
+}
+
 void LedReadout::setLines (std::vector<Line> l)
 {
     lines = std::move (l);
     repaint();
 }
 
-void LedReadout::paint (juce::Graphics& g)
+std::vector<juce::Rectangle<float>> LedReadout::lineAreas() const
 {
-    drawScreen (g, getLocalBounds().toFloat());
+    std::vector<juce::Rectangle<float>> areas;
     auto r = getLocalBounds().reduced (10, 6).toFloat();
     for (auto& line : lines)
     {
@@ -261,6 +280,47 @@ void LedReadout::paint (juce::Graphics& g)
         auto row = r.removeFromTop (h);
         if (row.getBottom() > (float) getHeight())
             break;
+        areas.push_back (row);
+    }
+    return areas;
+}
+
+int LedReadout::copyableLineAt (juce::Point<int> p) const
+{
+    const auto areas = lineAreas();
+    for (size_t i = 0; i < areas.size(); ++i)
+        if (areas[i].contains (p.toFloat()))
+            return lines[i].label.isNotEmpty() && lines[i].value != "--" ? (int) i : -1;
+    return -1;
+}
+
+void LedReadout::mouseDown (const juce::MouseEvent& e)
+{
+    if (const int i = copyableLineAt (e.getPosition()); i >= 0)
+    {
+        juce::SystemClipboard::copyTextToClipboard (copyableValue (lines[(size_t) i].value));
+        flash.trigger (i, 0);
+    }
+}
+
+void LedReadout::mouseMove (const juce::MouseEvent& e)
+{
+    setMouseCursor (copyableLineAt (e.getPosition()) >= 0 ? juce::MouseCursor::PointingHandCursor : juce::MouseCursor::NormalCursor);
+}
+
+void LedReadout::paint (juce::Graphics& g)
+{
+    drawScreen (g, getLocalBounds().toFloat());
+    const auto areas = lineAreas();
+    for (size_t i = 0; i < areas.size(); ++i)
+    {
+        const auto& line = lines[i];
+        const auto row = areas[i];
+        if (flash.isOn ((int) i))
+        {
+            g.setColour (col::ledGreen.withAlpha (0.18f));
+            g.fillRect (row.expanded (6.0f, 0.0f));
+        }
         if (line.label.isNotEmpty())
         {
             g.setColour (col::silkDim);
@@ -269,7 +329,13 @@ void LedReadout::paint (juce::Graphics& g)
         }
         g.setColour (line.colour);
         g.setFont (ledFont (lineHeight * 0.72f * line.scale));
-        if (line.label.isEmpty())
+        if (flash.isOn ((int) i))
+        {
+            g.setColour (col::ledGreen);
+            g.setFont (ledFont (lineHeight * 0.72f));
+            g.drawText ("COPIED", row, juce::Justification::centredRight);
+        }
+        else if (line.label.isEmpty())
             g.drawFittedText (line.value, row.toNearestInt(), juce::Justification::centredLeft, 2, 0.7f);
         else
             g.drawText (line.value, row, juce::Justification::centredRight);
@@ -277,6 +343,34 @@ void LedReadout::paint (juce::Graphics& g)
 }
 
 //==============================================================================
+LedTable::LedTable()
+{
+    setTooltip ("Click a value to copy it");
+}
+
+std::vector<float> LedTable::columnEdges (juce::Rectangle<float> area) const
+{
+    float total = 0;
+    for (auto w : widths) total += w;
+    std::vector<float> xs;
+    float x = area.getX();
+    for (auto w : widths) { xs.push_back (x); x += area.getWidth() * w / total; }
+    xs.push_back (area.getRight());
+    return xs;
+}
+
+int LedTable::columnAt (juce::Point<int> p) const
+{
+    auto area = getLocalBounds().toFloat().reduced (6.0f, 4.0f);
+    if (maxFirstRow() > 0)
+        area.removeFromRight (6.0f);
+    const auto xs = columnEdges (area);
+    for (size_t c = 0; c + 1 < xs.size(); ++c)
+        if ((float) p.x >= xs[c] && (float) p.x < xs[c + 1])
+            return (int) c;
+    return -1;
+}
+
 void LedTable::setColumns (juce::StringArray h, std::vector<float> w)
 {
     headers = std::move (h);
@@ -356,13 +450,7 @@ void LedTable::paint (juce::Graphics& g)
     auto area = getLocalBounds().toFloat().reduced (6.0f, 4.0f);
     const bool scrolls = maxFirstRow() > 0;
     const auto barArea = scrolls ? area.removeFromRight (6.0f).withTrimmedLeft (3.0f) : juce::Rectangle<float>();
-
-    float total = 0;
-    for (auto w : widths) total += w;
-    std::vector<float> xs;
-    float x = area.getX();
-    for (auto w : widths) { xs.push_back (x); x += area.getWidth() * w / total; }
-    xs.push_back (area.getRight());
+    const auto xs = columnEdges (area);
 
     auto header = area.removeFromTop (headerHeight());
     g.setFont (labelFont (10.5f));
@@ -419,18 +507,37 @@ void LedTable::paint (juce::Graphics& g)
         const auto& cells = rows[(size_t) i];
         for (int c = 0; c < cells.size() && c + 1 < (int) xs.size(); ++c)
         {
+            const auto cell = juce::Rectangle<float> (xs[(size_t) c], row.getY(), xs[(size_t) c + 1] - xs[(size_t) c], rh);
+            const auto just = c == 0 ? juce::Justification::centredLeft : juce::Justification::centredRight;
+            if (flash.isOn (i, c))
+            {
+                g.setColour (col::ledGreen.withAlpha (0.2f));
+                g.fillRect (cell);
+                g.setColour (col::ledGreen);
+                g.drawText ("COPIED", cell.reduced (5, 0), just);
+                continue;
+            }
             g.setColour (c == 0 ? baseColour.brighter (0.15f) : baseColour);
-            g.drawText (cells[c], juce::Rectangle<float> (xs[(size_t) c], row.getY(), xs[(size_t) c + 1] - xs[(size_t) c], rh).reduced (5, 0),
-                        c == 0 ? juce::Justification::centredLeft : juce::Justification::centredRight);
+            g.drawText (cells[c], cell.reduced (5, 0), just);
         }
     }
 }
 
 void LedTable::mouseDown (const juce::MouseEvent& e)
 {
-    if (! selectable) return;
     const int r = rowAt (e.getPosition());
-    if (r >= 0)
+    if (r < 0)
+        return;
+
+    // Copy the clicked value, e.g. to paste a frequency into an EQ.
+    const int c = columnAt (e.getPosition());
+    if (c >= 0 && c < rows[(size_t) r].size() && rows[(size_t) r][c].isNotEmpty())
+    {
+        juce::SystemClipboard::copyTextToClipboard (copyableValue (rows[(size_t) r][c]));
+        flash.trigger (r, c);
+    }
+
+    if (selectable)
     {
         selected = r;
         repaint();
@@ -440,10 +547,9 @@ void LedTable::mouseDown (const juce::MouseEvent& e)
 
 void LedTable::mouseMove (const juce::MouseEvent& e)
 {
-    if (! selectable) return;
     const int r = rowAt (e.getPosition());
-    if (r != hover) { hover = r; repaint(); }
     setMouseCursor (r >= 0 ? juce::MouseCursor::PointingHandCursor : juce::MouseCursor::NormalCursor);
+    if (selectable && r != hover) { hover = r; repaint(); }
 }
 
 void LedTable::mouseExit (const juce::MouseEvent&) { hover = -1; repaint(); }

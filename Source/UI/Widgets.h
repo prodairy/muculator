@@ -8,6 +8,23 @@ namespace ui
 {
 juce::String str (const std::string& s);
 
+/** What a click on a displayed value copies: "462.00 Hz" -> "462.00", "29.3 (1/64)" -> "29.3",
+    anything that is not a number with at most one unit word is copied as shown. */
+juce::String copyableValue (const juce::String& shown);
+
+/** Brief "COPIED" flash shared by the tables and readouts. */
+struct CopyFlash : private juce::Timer
+{
+    explicit CopyFlash (juce::Component& c) : owner (c) {}
+    void trigger (int row, int column) { flashRow = row; flashColumn = column; owner.repaint(); startTimer (700); }
+    bool isOn (int row, int column = 0) const { return isTimerRunning() && row == flashRow && column == flashColumn; }
+
+private:
+    void timerCallback() override { stopTimer(); owner.repaint(); }
+    juce::Component& owner;
+    int flashRow = -1, flashColumn = -1;
+};
+
 //==============================================================================
 /** Square illuminated console button. */
 class IllumButton : public juce::TextButton
@@ -87,7 +104,7 @@ private:
 
 //==============================================================================
 /** Black screen with label/value lines. */
-class LedReadout final : public juce::Component
+class LedReadout final : public juce::Component, public juce::SettableTooltipClient
 {
 public:
     struct Line
@@ -97,21 +114,30 @@ public:
         float scale = 1.0f; // value size multiplier
     };
 
+    LedReadout();
     void setLines (std::vector<Line> newLines);
     void setLineHeight (float h) { lineHeight = h; repaint(); }
     void paint (juce::Graphics&) override;
+    void mouseDown (const juce::MouseEvent&) override;
+    void mouseMove (const juce::MouseEvent&) override;
 
 private:
     std::vector<Line> lines;
     float lineHeight = 21.0f;
+    CopyFlash flash { *this };
+    /** Row of each line, as painted; empty once it falls off the screen. */
+    std::vector<juce::Rectangle<float>> lineAreas() const;
+    /** Index of a copyable line under the point, or -1. */
+    int copyableLineAt (juce::Point<int>) const;
 };
 
 //==============================================================================
 /** LED table with a recommended row (amber band) and a user-selected row (green frame).
     Scrolls with the mouse wheel when the rows do not fit. */
-class LedTable final : public juce::Component
+class LedTable final : public juce::Component, public juce::SettableTooltipClient
 {
 public:
+    LedTable();
     void setColumns (juce::StringArray headers, std::vector<float> relativeWidths);
     void setRows (std::vector<juce::StringArray> rows);
     void setRecommendedRow (int r)   { recommended = r; repaint(); }
@@ -136,7 +162,10 @@ private:
     int firstRow = 0;          // scroll position
     float wheelAccum = 0;
     bool selectable = false;
+    CopyFlash flash { *this };
     float headerHeight() const { return 22.0f; }
+    std::vector<float> columnEdges (juce::Rectangle<float> area) const;
+    int columnAt (juce::Point<int>) const;
     float rowHeight() const;
     int visibleRows() const;
     int maxFirstRow() const { return juce::jmax (0, (int) rows.size() - visibleRows()); }

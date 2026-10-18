@@ -41,6 +41,28 @@ int main (int argc, char** argv)
     ed->setBpmTextFor ("pitch", "126");
     save (*ed, dir, "4e_stretch_microtone");
 
+    // Click-to-copy: what a click copies, and the COPIED flash on a Delay table cell
+    int copyFailures = 0;
+    for (auto [shown, want] : { std::pair { "462.00 Hz", "462.00" }, { "+0.84 st", "0.84" }, { "-15.5 ct", "-15.5" },
+                                { "29.297 (1/64)", "29.297" }, { "1845.7", "1845.7" }, { "1/8D", "1/8D" },
+                                { "A#4", "A#4" }, { "12.1 x 9.6 x 7.6 m", "12.1 x 9.6 x 7.6 m" }, { "x1.0500  (105.00 %)", "x1.0500  (105.00 %)" } })
+        if (ui::copyableValue (shown) != want)
+        {
+            ++copyFailures;
+            std::printf ("FAIL copyableValue (%s) = %s\n", shown, ui::copyableValue (shown).toRawUTF8());
+        }
+    ed->selectModule (1);
+    for (auto* child : ed->getModule (1)->getChildren())
+        if (auto* table = dynamic_cast<ui::LedTable*> (child))
+        {
+            const auto pos = juce::Point<float> ((float) table->getWidth() * 0.2f, 22.0f + 4.0f + 3.5f * 30.0f);
+            const auto now = juce::Time::getCurrentTime();
+            table->mouseDown (juce::MouseEvent (juce::Desktop::getInstance().getMainMouseSource(), pos, {},
+                                                juce::MouseInputSource::defaultPressure, 0, 0, 0, 0, table, table, now, pos, now, 1, false));
+            save (*ed, dir, "2c_copied");
+        }
+    ed->selectModule (3);
+
     // "How to use" panels
     pitch->showHelp (true);
     save (*ed, dir, "4f_stretch_help");
@@ -81,5 +103,5 @@ int main (int argc, char** argv)
     std::printf ("state bytes: %d\n", (int) mb.getSize());
 
     ed.reset();
-    return 0;
+    return copyFailures == 0 ? 0 : 1;
 }

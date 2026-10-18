@@ -73,12 +73,6 @@ private:
     juce::String noteText (int midi) const;
     juce::String noteWithCents (const calc::NoteInfo&) const;
 
-    // tuning (shared by every tab)
-    ui::LedField a4Field { "A4 reference", "Hz" };
-    ui::IllumButton a4Presets { "...", ui::col::capWhite, false };
-    ui::ButtonGroup spelling;
-    double a4 = calc::kA4Hz;
-    bool flats = false;
 
     ui::ButtonGroup tabs;
     int tab = 0;
@@ -105,6 +99,13 @@ private:
     ui::NotePicker hmNote { "Fundamental note" };
     ui::LedField hmFreq { "Fundamental", "Hz" };
     ui::LedTable hmTable;
+
+    // tuning (shared by every tab)
+    ui::LedField a4Field { "A4 reference", "Hz" };
+    ui::IllumButton a4Presets { "...", ui::col::capWhite, false };
+    ui::ButtonGroup spelling;
+    double a4 = calc::kA4Hz;
+    bool flats = false;
 
     juce::Rectangle<int> inputArea, outputArea;
 };
