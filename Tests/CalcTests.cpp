@@ -124,6 +124,28 @@ int main()
         truth ("saw is all", harmonicSetFor (Waveform::Saw) == HarmonicSet::All);
     }
 
+    // --- note spelling and tuning reference
+    truth ("C#4 flat = Db4", noteName (61, true) == "Db4");
+    truth ("A#3 flat = Bb3", noteName (58, true) == "Bb3");
+    truth ("naturals unchanged", noteName (60, true) == "C4" && noteName (64, true) == "E4");
+    truth ("sharps default", noteName (61) == "C#4");
+    near ("A4 @432", midiToFreq (69, 432), 432);
+    near ("A5 @442", midiToFreq (81, 442), 884);
+    near ("freqToMidi @432", freqToMidi (432, 432), 69);
+    {
+        auto n = analyse (440, 432); // 440 Hz is +31.8 ct above A4 = 432
+        truth ("440 @432 -> A4", n.nearestMidi == 69);
+        near ("440 @432 cents", n.cents, 1200 * std::log2 (440.0 / 432.0), 1e-9);
+        near ("note Hz @432", n.nearestFreq, 432);
+        auto t = transpose (432, 12, 0, 432);
+        truth ("transpose @432 = A5", noteName (t.target.nearestMidi) == "A5");
+        near ("transpose @432 in tune", t.target.cents, 0, 1e-9);
+        auto s = stretch (120, 432, 126, kMicrotoneThresholdCents, 432);
+        near ("stretch @432 lands on A#4 bpm", stretch (120, 432, s.bpmForNearest, kMicrotoneThresholdCents, 432).note.cents, 0, 1e-6);
+        auto h = harmonics (432, 2, HarmonicSet::All, 432);
+        near ("harmonic @432 in tune", h[1].note.cents, 0, 1e-9);
+    }
+
     // --- reverb
     {
         auto rows = reverbRows (120, ReverbStyle::Hall);

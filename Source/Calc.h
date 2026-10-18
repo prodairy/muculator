@@ -13,6 +13,8 @@ constexpr int    kA4Midi    = 69;
 constexpr double kMinBpm    = 1.0;
 constexpr double kMaxBpm    = 999.0;
 constexpr double kMicrotoneThresholdCents = 10.0;
+constexpr double kMinA4Hz   = 400.0;  // range accepted for the tuning reference
+constexpr double kMaxA4Hz   = 480.0;
 
 //==============================================================================
 // Input validation
@@ -43,11 +45,11 @@ std::string noteValueLabel (int denominator, NoteKind kind = NoteKind::Normal);
 const std::vector<int>& delayDenominators(); // 1 .. 512
 
 //==============================================================================
-// Pitch
-double midiToFreq (double midi);
-double freqToMidi (double hz);
-std::string noteName (int midi);      // "C#4", A4 = 69
-std::string pitchClassName (int pc);  // 0..11 -> "C".."B"
+// Pitch. `a4` is the tuning reference in Hz (440 unless the user changes it).
+double midiToFreq (double midi, double a4 = kA4Hz);
+double freqToMidi (double hz, double a4 = kA4Hz);
+std::string noteName (int midi, bool flats = false);      // "C#4" or "Db4", A4 = 69
+std::string pitchClassName (int pc, bool flats = false);  // 0..11 -> "C".."B"
 int noteToMidi (int pitchClass, int octave);
 
 struct NoteInfo
@@ -58,7 +60,7 @@ struct NoteInfo
     double nearestFreq = 0;
     double cents       = 0; // freq relative to nearest note, -50..+50
 };
-NoteInfo analyse (double hz);
+NoteInfo analyse (double hz, double a4 = kA4Hz);
 
 struct TransposeResult
 {
@@ -66,7 +68,7 @@ struct TransposeResult
     double  targetFreq = 0;
     NoteInfo target;
 };
-TransposeResult transpose (double sourceHz, double semitones, double cents);
+TransposeResult transpose (double sourceHz, double semitones, double cents, double a4 = kA4Hz);
 
 struct StretchResult
 {
@@ -84,13 +86,13 @@ struct StretchResult
 };
 /** Varispeed (tape-style) stretch: changing tempo by factor r changes pitch by factor r. */
 StretchResult stretch (double oldBpm, double oldHz, double newBpm,
-                       double thresholdCents = kMicrotoneThresholdCents);
+                       double thresholdCents = kMicrotoneThresholdCents, double a4 = kA4Hz);
 
 struct Harmonic { int n; double freq; NoteInfo note; };
 enum class HarmonicSet { All, Odd, Even };
 /** The first `count` harmonics of the chosen set (n = 1 is the fundamental), stopping at maxHz. */
 std::vector<Harmonic> harmonics (double fundamentalHz, int count, HarmonicSet set = HarmonicSet::All,
-                                 double maxHz = 22000.0);
+                                 double a4 = kA4Hz, double maxHz = 22000.0);
 
 enum class Waveform { Saw, Square, Triangle };
 /** Ideal amplitude of harmonic n relative to the fundamental: saw 1/n (all), square 1/n (odd),

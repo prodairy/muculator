@@ -4,13 +4,6 @@ using namespace ui;
 
 namespace
 {
-juce::String noteStr (int midi) { return str (calc::noteName (midi)); }
-
-juce::String noteWithCents (const calc::NoteInfo& n)
-{
-    return noteStr (n.nearestMidi) + "  " + str (calc::fmtCents (n.cents));
-}
-
 juce::Colour centsColour (double cents)
 {
     const double a = std::abs (cents);
@@ -25,11 +18,12 @@ PitchModule::PitchModule (ModuleContext& c)
       hmMode ({ "NOTE", "FREQ" }, col::capGreen, 303, false),
       hmSet ({ "ALL", "ODD", "EVEN" }, col::capWhite, 304, false),
       hmWave ({ "OFF", "SAW", "SQUARE", "TRI" }, col::capYellow, 305, false),
-      hmCount ({ "16", "32", "64" }, col::capWhite, 306, false)
+      hmCount ({ "16", "32", "64" }, col::capWhite, 306, false),
+      spelling ({ "#", "b" }, col::capWhite, 307, false)
 {
-    headerBadge = "A4 = " + str (calc::fmt (calc::kA4Hz, 2)) + " Hz";
-
     auto s = state();
+    a4Field.bind (s, "a4", "440");
+    spelling.setSelected ((bool) s.getProperty ("flats", false) ? 1 : 0, false);
     tpNote.bind (s, "tpNote", 60);
     tpSemis.bind (s, "tpSemis", "7");
     tpCents.bind (s, "tpCents", "0");
@@ -51,7 +45,21 @@ PitchModule::PitchModule (ModuleContext& c)
              &stOut, &fnFreq, &fnOut, &hmMode, &hmSet, &hmWave, &hmCount, &hmNote, &hmFreq, &hmTable })
         addChildComponent (comp);
     addChildComponent (microtone);
-    tabs.setVisible (true);
+    for (auto* comp : std::initializer_list<juce::Component*> { &tabs, &a4Field, &a4Presets, &spelling })
+        addAndMakeVisible (comp);
+
+    a4Field.onChange = [this] { refresh(); };
+    a4Field.setTooltip ("Tuning reference: the frequency of A4 (400 to 480 Hz)");
+    a4Presets.setTooltip ("Common references");
+    a4Presets.onClick = [this]
+    {
+        juce::PopupMenu m;
+        for (double hz : { 432.0, 440.0, 442.0, 443.0 })
+            m.addItem (juce::String (hz, 0) + " Hz", [this, hz] { a4Field.setText (juce::String (hz, 0)); refresh(); });
+        m.showMenuAsync (juce::PopupMenu::Options().withTargetComponent (a4Presets));
+    };
+    spelling.setTooltip ("Write black keys with sharps (C#) or flats (Db)");
+    spelling.onSelect = [this] (int i) { state().setProperty ("flats", i == 1, nullptr); refresh(); };
 
     for (auto* f : { &tpSemis, &tpCents, &stFreq, &stOldBpm, &fnFreq, &hmFreq })
         f->onChange = [this] { refresh(); };
@@ -118,13 +126,33 @@ void PitchModule::updateVisibility()
     hmSet.setVisible (hm); hmWave.setVisible (hm); hmCount.setVisible (hm);
 }
 
+juce::String PitchModule::noteText (int midi) const { return str (calc::noteName (midi, flats)); }
+
+juce::String PitchModule::noteWithCents (const calc::NoteInfo& n) const
+{
+    return noteText (n.nearestMidi) + "  " + str (calc::fmtCents (n.cents));
+}
+
 void PitchModule::refresh()
 {
+    flats = spelling.getSelected() == 1;
+    for (auto* n : { &tpNote, &stNote, &hmNote })
+        n->setFlats (flats);
+
     if (! stNewBpm.isEditing())
         stNewBpm.setText (ctx.bpmTextFor (getId()));
     stNewBpm.setLocked (false, ctx.isChained() ? "LINKED" : "");
 
     Validator v;
+    const auto ref = v.num (a4Field, "A4 reference", calc::kMinA4Hz, calc::kMaxA4Hz);
+    a4 = ref.value_or (calc::kA4Hz);
+    const auto badge = ref ? "A4 = " + str (calc::fmt (a4, 2)) + " Hz" : juce::String ("A4 = -- Hz");
+    if (badge != headerBadge)
+    {
+        headerBadge = badge;
+        repaint();
+    }
+
     switch (tab)
     {
         case 0: refreshTranspose (v); break;
@@ -140,14 +168,14 @@ void PitchModule::refreshTranspose (Validator& v)
     const auto semis = v.num (tpSemis, "Semitones", -96, 96);
     const auto cents = v.num (tpCents, "Cents", -100, 100);
     const int src = tpNote.getMidi();
-    const double srcHz = calc::midiToFreq (src);
+    const double srcHz = calc::midiToFreq (src, a4);
     if (! v.ok())
     {
-        tpOut.setLines ({ { "SOURCE", noteStr (src) + "  " + str (calc::fmtHz (srcHz)) + " Hz" },
+        tpOut.setLines ({ { "SOURCE", noteText (src) + "  " + str (calc::fmtHz (srcHz)) + " Hz" },
                           { "RESULT", "--", col::ledRed, 1.8f } });
         return;
     }
-    const auto r = calc::transpose (srcHz, *semis, *cents);
+    const auto r = calc::transpose (srcHz, *semis, *cents, a4);
     if (r.target.nearestMidi < 0 || r.target.nearestMidi > 131)
     {
         v.errors.add ("Result is outside the MIDI note range (C-1 .. B9)");
@@ -155,9 +183,9 @@ void PitchModule::refreshTranspose (Validator& v)
         return;
     }
     tpOut.setLines ({
-        { "SOURCE", noteStr (src) + "  " + str (calc::fmtHz (srcHz)) + " Hz" },
+        { "SOURCE", noteText (src) + "  " + str (calc::fmtHz (srcHz)) + " Hz" },
         { "SHIFT", str (calc::fmt (*semis, 2)) + " st  " + str (calc::fmtCents (*cents)) },
-        { "NEW NOTE", noteStr (r.target.nearestMidi), col::ledGreen, 2.0f },
+        { "NEW NOTE", noteText (r.target.nearestMidi), col::ledGreen, 2.0f },
         { "DEVIATION", str (calc::fmtCents (r.target.cents)), centsColour (r.target.cents) },
         { "NEW FREQUENCY", str (calc::fmtHz (r.targetFreq)) + " Hz", col::ledAmber, 1.3f },
         { "RATIO", "x" + str (calc::fmt (r.targetFreq / srcHz, 5)) },
@@ -168,7 +196,7 @@ void PitchModule::refreshStretch (Validator& v)
 {
     double oldHz = 0;
     if (stMode.getSelected() == 0)
-        oldHz = calc::midiToFreq (stNote.getMidi());
+        oldHz = calc::midiToFreq (stNote.getMidi(), a4);
     else if (auto f = v.num (stFreq, "Old frequency", 1, 30000))
         oldHz = *f;
 
@@ -184,8 +212,8 @@ void PitchModule::refreshStretch (Validator& v)
         return;
     }
 
-    const auto r = calc::stretch (*oldBpm, oldHz, *newBpm.value);
-    const auto oldInfo = calc::analyse (oldHz);
+    const auto r = calc::stretch (*oldBpm, oldHz, *newBpm.value, calc::kMicrotoneThresholdCents, a4);
+    const auto oldInfo = calc::analyse (oldHz, a4);
     if (r.note.nearestMidi < 0 || r.note.nearestMidi > 131)
     {
         v.errors.add ("Result is outside the MIDI note range (C-1 .. B9)");
@@ -196,7 +224,7 @@ void PitchModule::refreshStretch (Validator& v)
 
     stOut.setLines ({
         { "OLD", noteWithCents (oldInfo) + "  " + str (calc::fmtHz (oldHz)) + " Hz", col::ledAmber.withAlpha (0.75f) },
-        { "NEW NOTE", noteStr (r.note.nearestMidi), r.microtone ? col::ledRed : col::ledGreen, 2.2f },
+        { "NEW NOTE", noteText (r.note.nearestMidi), r.microtone ? col::ledRed : col::ledGreen, 2.2f },
         { "DEVIATION", str (calc::fmtCents (r.note.cents)), centsColour (r.note.cents), 1.1f },
         { "NEW FREQUENCY", str (calc::fmtHz (r.newFreq)) + " Hz", col::ledAmber, 1.3f },
         { "PITCH SHIFT", (r.semitones >= 0 ? "+" : "") + str (calc::fmt (r.semitones, 2)) + " st" },
@@ -210,18 +238,18 @@ void PitchModule::refreshStretch (Validator& v)
         const bool lowerIsNearest = r.note.nearestMidi == r.lowerMidi;
         const auto bpmTxt = [] (double b) { return str (calc::fmt (b, 2)) + " BPM"; };
         microtone.setMessage (
-            "MICROTONE WARNING:  between " + noteStr (r.lowerMidi) + " and " + noteStr (r.upperMidi),
-            str (calc::fmtHz (r.newFreq)) + " Hz is " + str (calc::fmtCents (fromLower)) + " from " + noteStr (r.lowerMidi)
-                + " and " + str (calc::fmtCents (fromUpper)) + " from " + noteStr (r.upperMidi) + ".\n"
-                + "Nearest note " + noteStr (r.note.nearestMidi) + " -> set NEW BPM to " + bpmTxt (r.bpmForNearest) + "\n"
-                + "Other neighbour " + noteStr (lowerIsNearest ? r.upperMidi : r.lowerMidi) + " -> "
+            "MICROTONE WARNING:  between " + noteText (r.lowerMidi) + " and " + noteText (r.upperMidi),
+            str (calc::fmtHz (r.newFreq)) + " Hz is " + str (calc::fmtCents (fromLower)) + " from " + noteText (r.lowerMidi)
+                + " and " + str (calc::fmtCents (fromUpper)) + " from " + noteText (r.upperMidi) + ".\n"
+                + "Nearest note " + noteText (r.note.nearestMidi) + " -> set NEW BPM to " + bpmTxt (r.bpmForNearest) + "\n"
+                + "Other neighbour " + noteText (lowerIsNearest ? r.upperMidi : r.lowerMidi) + " -> "
                 + bpmTxt (lowerIsNearest ? r.bpmForUpper : r.bpmForLower),
             WarningPanel::Level::Microtone);
     }
     else
     {
         microtone.setMessage ("IN TUNE", "Within +/-" + str (calc::fmt (calc::kMicrotoneThresholdCents, 0)) + " ct of "
-                                             + noteStr (r.note.nearestMidi) + ". Exact at " + str (calc::fmt (r.bpmForNearest, 2)) + " BPM.",
+                                             + noteText (r.note.nearestMidi) + ". Exact at " + str (calc::fmt (r.bpmForNearest, 2)) + " BPM.",
                               WarningPanel::Level::Info);
     }
     microtone.setVisible (true);
@@ -235,10 +263,10 @@ void PitchModule::refreshFreq (Validator& v)
         fnOut.setLines ({ { "NOTE", "--", col::ledRed, 2.2f } });
         return;
     }
-    const auto n = calc::analyse (*f);
+    const auto n = calc::analyse (*f, a4);
     const double sr = ctx.hostSampleRate();
     fnOut.setLines ({
-        { "NEAREST NOTE", noteStr (n.nearestMidi), centsColour (n.cents) == col::ledRed ? col::ledAmber : col::ledGreen, 2.2f },
+        { "NEAREST NOTE", noteText (n.nearestMidi), centsColour (n.cents) == col::ledRed ? col::ledAmber : col::ledGreen, 2.2f },
         { "DEVIATION", str (calc::fmtCents (n.cents)), centsColour (n.cents), 1.1f },
         { "NOTE FREQUENCY", str (calc::fmtHz (n.nearestFreq)) + " Hz" },
         { "MIDI (exact)", str (calc::fmt (n.exactMidi, 3)) },
@@ -252,7 +280,7 @@ void PitchModule::refreshHarmonics (Validator& v)
 {
     double f0 = 0;
     if (hmMode.getSelected() == 0)
-        f0 = calc::midiToFreq (hmNote.getMidi());
+        f0 = calc::midiToFreq (hmNote.getMidi(), a4);
     else if (auto f = v.num (hmFreq, "Fundamental", 1, 20000))
         f0 = *f;
 
@@ -272,11 +300,11 @@ void PitchModule::refreshHarmonics (Validator& v)
     static const calc::HarmonicSet sets[] = { calc::HarmonicSet::All, calc::HarmonicSet::Odd, calc::HarmonicSet::Even };
     static const int counts[] = { 16, 32, 64 };
     std::vector<juce::StringArray> rows;
-    const auto hs = calc::harmonics (f0, counts[juce::jlimit (0, 2, hmCount.getSelected())], sets[juce::jlimit (0, 2, hmSet.getSelected())]);
+    const auto hs = calc::harmonics (f0, counts[juce::jlimit (0, 2, hmCount.getSelected())], sets[juce::jlimit (0, 2, hmSet.getSelected())], a4);
     for (auto& h : hs)
     {
         juce::StringArray row { juce::String (h.n), h.n == 1 ? "FUND" : h.n % 2 == 1 ? "ODD" : "EVEN",
-                                str (calc::fmtHz (h.freq)), noteStr (h.note.nearestMidi),
+                                str (calc::fmtHz (h.freq)), noteText (h.note.nearestMidi),
                                 str (calc::fmtCents (h.note.cents)), str (calc::fmtHz (h.note.nearestFreq)) };
         if (wave > 0)
         {
@@ -299,6 +327,12 @@ void PitchModule::paint (juce::Graphics& g)
     static const char* outTitles[] = { "Result", "Stretched sample", "Note", "Harmonic series (red = >10 ct off)" };
     drawSection (g, inputArea, inTitles[tab]);
     drawSection (g, outputArea, outTitles[tab]);
+
+    g.setFont (labelFont (10.5f));
+    g.setColour (col::silkscreen.withAlpha (0.85f));
+    g.drawText ("NOTE NAMES", spelling.getBounds().translated (0, -16).withHeight (15), juce::Justification::centredLeft);
+    g.setColour (col::silkDim.withAlpha (0.4f));
+    g.fillRect (inputArea.getX() + 10, a4Field.getY() - 8, inputArea.getWidth() - 20, 1);
 
     if (tab == 1)
     {
@@ -328,6 +362,15 @@ void PitchModule::layoutContent (juce::Rectangle<int> r)
 
     auto in = inputArea.reduced (10).withTrimmedTop (22);
     auto out = outputArea.reduced (8).withTrimmedTop (22);
+
+    // tuning row at the bottom of the input panel, the same on every tab
+    auto tuning = in.removeFromBottom (52);
+    in.removeFromBottom (10);
+    spelling.setBounds (tuning.removeFromRight (76).withTrimmedTop (16));
+    tuning.removeFromRight (12);
+    a4Presets.setBounds (tuning.removeFromRight (30).withTrimmedTop (16));
+    tuning.removeFromRight (4);
+    a4Field.setBounds (tuning);
     const auto row = [&in] (int h) { auto a = in.removeFromTop (h); in.removeFromTop (10); return a; };
 
     switch (tab)

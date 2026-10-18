@@ -66,6 +66,15 @@ private:
     void refreshFreq (Validator&);
     void refreshHarmonics (Validator&);
     void updateVisibility();
+    juce::String noteText (int midi) const;
+    juce::String noteWithCents (const calc::NoteInfo&) const;
+
+    // tuning (shared by every tab)
+    ui::LedField a4Field { "A4 reference", "Hz" };
+    ui::IllumButton a4Presets { "...", ui::col::capWhite, false };
+    ui::ButtonGroup spelling;
+    double a4 = calc::kA4Hz;
+    bool flats = false;
 
     ui::ButtonGroup tabs;
     int tab = 0;

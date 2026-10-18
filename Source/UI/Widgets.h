@@ -46,6 +46,7 @@ public:
     void setLocked (bool locked, const juce::String& badge = {});
     void setCaption (const juce::String& c) { caption = c; repaint(); }
     void setFontHeight (float h);
+    void setTooltip (const juce::String& t) { editor.setTooltip (t); }
     bool isEditing() const { return editor.hasKeyboardFocus (true); }
 
     std::function<void()> onChange;
@@ -70,6 +71,8 @@ public:
     void bind (juce::ValueTree tree, const juce::Identifier& prop, int defaultMidi);
     int getMidi() const;
     void setMidi (int midi);
+    /** Shows Db instead of C# and so on. */
+    void setFlats (bool flats);
     std::function<void()> onChange;
     void paint (juce::Graphics&) override;
     void resized() override;

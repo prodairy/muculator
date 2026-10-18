@@ -213,6 +213,14 @@ void NotePicker::setMidi (int midi)
     octave.setSelectedId (juce::jlimit (-1, 9, midi / 12 - 1) + 2, juce::dontSendNotification);
 }
 
+void NotePicker::setFlats (bool flats)
+{
+    for (int i = 0; i < 12; ++i)
+        pitch.changeItemText (i + 1, str (calc::pitchClassName (i, flats)));
+    pitch.setSelectedId (pitch.getSelectedId(), juce::dontSendNotification);
+    pitch.repaint();
+}
+
 void NotePicker::changed()
 {
     if (boundTree.isValid())

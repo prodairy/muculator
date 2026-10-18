@@ -84,6 +84,9 @@ void MuculatorEditor::buildModules()
 
 void MuculatorEditor::valueTreePropertyChanged (juce::ValueTree& tree, const juce::Identifier& prop)
 {
+    if (tree.hasType ("pitch") && prop == juce::Identifier ("a4"))
+        repaint (footer);
+
     if (tree == state && prop == juce::Identifier ("loadCount"))
     {
         // Host restored a saved state while the editor is open: rebuild from it.
@@ -326,9 +329,13 @@ void MuculatorEditor::paint (juce::Graphics& g)
                     footer, juce::Justification::centredLeft);
         return;
     }
+    const auto a4 = calc::parseInRange (state.getChildWithName ("pitch").getProperty ("a4", "440").toString().toStdString(),
+                                        "A4", calc::kMinA4Hz, calc::kMaxA4Hz);
     g.setColour (col::silkDim);
     g.setFont (labelFont (10.0f, false));
-    g.drawText ("A4 = 440 Hz  |  C4 = MIDI 60  |  audio passes through untouched", footer, juce::Justification::centredLeft);
+    g.drawText ("A4 = " + (a4.ok() ? juce::String (*a4.value, 2).trimCharactersAtEnd ("0").trimCharactersAtEnd (".") : juce::String ("--"))
+                    + " Hz  |  C4 = MIDI 60  |  audio passes through untouched",
+                footer, juce::Justification::centredLeft);
     g.drawText (isChained() ? "CHAIN ON: one BPM for every module" : "CHAIN OFF: each module keeps its own BPM",
                 footer, juce::Justification::centredRight);
 }
