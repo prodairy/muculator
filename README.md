@@ -72,7 +72,7 @@ Muculator gives you the new note and frequency. If the result lands **between tw
 
 ## Build from source
 
-You need CMake ≥ 3.22 and a C++20 compiler (Xcode / Command Line Tools on macOS, Visual Studio 2022 on Windows).
+You need CMake ≥ 3.22 and a C++20 compiler (Xcode / Command Line Tools on macOS, Visual Studio 2022 or newer on Windows).
 JUCE is downloaded automatically if it is not found locally.
 
 ```bash
