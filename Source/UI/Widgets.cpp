@@ -113,7 +113,68 @@ LedField::LedField (const juce::String& cap, const juce::String& u, const juce::
     };
     editor.onReturnKey = [this] { editor.giveAwayKeyboardFocus(); };
     editor.onEscapeKey = [this] { editor.giveAwayKeyboardFocus(); };
+    editor.onFocusLost = [this] { if (nudge) editor.setInterceptsMouseClicks (false, false); };
     addAndMakeVisible (editor);
+}
+
+void LedField::setNudger (std::function<void (int, bool)> n)
+{
+    nudge = std::move (n);
+    // The field takes the mouse itself so it can tell a drag from a click; a click hands over to the editor.
+    editor.setInterceptsMouseClicks (nudge == nullptr, nudge == nullptr);
+    setMouseCursor (nudge ? juce::MouseCursor::UpDownResizeCursor : juce::MouseCursor::NormalCursor);
+}
+
+void LedField::mouseDown (const juce::MouseEvent&)
+{
+    dragStepsApplied = 0;
+    dragged = false;
+}
+
+void LedField::mouseDrag (const juce::MouseEvent& e)
+{
+    if (! nudge || editor.isReadOnly())
+        return;
+    const int steps = -e.getDistanceFromDragStartY() / 4; // 4 px per step, up = more
+    if (steps != dragStepsApplied)
+    {
+        dragged = true;
+        nudge (steps - dragStepsApplied, e.mods.isShiftDown());
+        dragStepsApplied = steps;
+    }
+}
+
+void LedField::mouseUp (const juce::MouseEvent&)
+{
+    if (nudge && ! dragged)
+    {
+        editor.setInterceptsMouseClicks (true, true);
+        editor.grabKeyboardFocus();
+    }
+}
+
+void LedField::mouseWheelMove (const juce::MouseEvent& e, const juce::MouseWheelDetails& w)
+{
+    if (! nudge || editor.isReadOnly())
+    {
+        Component::mouseWheelMove (e, w);
+        return;
+    }
+    wheelAccum += w.deltaY * (w.isReversed ? -1.0f : 1.0f);
+    int steps = 0;
+    if (! w.isSmooth)
+    {
+        steps = wheelAccum > 0 ? 1 : -1;
+        wheelAccum = 0;
+    }
+    else
+    {
+        // Trackpads send many small deltas: add them up.
+        while (wheelAccum >= 0.05f)  { ++steps; wheelAccum -= 0.05f; }
+        while (wheelAccum <= -0.05f) { --steps; wheelAccum += 0.05f; }
+    }
+    if (steps != 0)
+        nudge (steps, e.mods.isShiftDown());
 }
 
 void LedField::bind (juce::ValueTree tree, const juce::Identifier& prop, const juce::String& defaultText)

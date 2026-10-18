@@ -14,6 +14,7 @@ public:
 
     void paint (juce::Graphics&) override;
     void resized() override;
+    bool keyPressed (const juce::KeyPress&) override;
 
     void selectModule (int index);
     ModuleBase* getModule (int index) { return modules[(size_t) index].get(); }
@@ -32,7 +33,8 @@ private:
     void valueTreePropertyChanged (juce::ValueTree&, const juce::Identifier&) override;
     void buildModules();
     void bpmChanged();
-    void nudgeBpm (double delta);
+    /** Moves the BPM by whole steps of stepSize, landing on the step grid (120.5 + 1 -> 121). */
+    void nudgeBpm (int steps, double stepSize);
     void tap();
     void setChained (bool);
     void updateTopBar();

@@ -65,11 +65,18 @@ public:
     void setFontHeight (float h);
     void setTooltip (const juce::String& t) { editor.setTooltip (t); }
     bool isEditing() const { return editor.hasKeyboardFocus (true); }
+    /** Lets the value be changed by dragging up / down and with the mouse wheel. The callback gets
+        whole steps (positive = up) and whether Shift is held for fine steps. A click still edits. */
+    void setNudger (std::function<void (int steps, bool fine)> nudger);
 
     std::function<void()> onChange;
 
     void paint (juce::Graphics&) override;
     void resized() override;
+    void mouseDown (const juce::MouseEvent&) override;
+    void mouseDrag (const juce::MouseEvent&) override;
+    void mouseUp (const juce::MouseEvent&) override;
+    void mouseWheelMove (const juce::MouseEvent&, const juce::MouseWheelDetails&) override;
 
 private:
     juce::String caption, unit, badge;
@@ -77,6 +84,10 @@ private:
     juce::ValueTree boundTree;
     juce::Identifier boundProp;
     float fontHeight = 17.0f;
+    std::function<void (int, bool)> nudge;
+    int dragStepsApplied = 0;
+    bool dragged = false;
+    float wheelAccum = 0;
 };
 
 //==============================================================================

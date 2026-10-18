@@ -29,12 +29,16 @@ MuculatorEditor::MuculatorEditor (MuculatorProcessor& p)
     bpmField.setFontHeight (30.0f);
     bpmField.setCaption ("Tempo  BPM");
     bpmField.onChange = [this] { setBpmTextFor (currentId(), bpmField.getText()); };
-    minus.onClick = [this] { nudgeBpm (-1.0); };
-    plus.onClick  = [this] { nudgeBpm (1.0); };
-    minus.setTooltip ("-1 BPM");
-    plus.setTooltip ("+1 BPM");
+    const auto shiftHeld = [] { return juce::ModifierKeys::getCurrentModifiers().isShiftDown(); };
+    minus.onClick = [this, shiftHeld] { nudgeBpm (-1, shiftHeld() ? 0.1 : 1.0); };
+    plus.onClick  = [this, shiftHeld] { nudgeBpm (1, shiftHeld() ? 0.1 : 1.0); };
+    minus.setTooltip ("-1 BPM  (Shift: -0.1)");
+    plus.setTooltip ("+1 BPM  (Shift: +0.1)");
+    bpmField.setNudger ([this] (int steps, bool fine) { nudgeBpm (steps, fine ? 0.1 : 1.0); });
+    bpmField.setTooltip ("Click to type. Drag up / down or scroll to change (Shift: 0.1 steps)");
     tapButton.onClick = [this] { tap(); };
-    tapButton.setTooltip ("Tap at least twice in tempo");
+    tapButton.setTooltip ("Tap at least twice in tempo (key: T)");
+    setWantsKeyboardFocus (true);
     chainButton.setToggleState ((bool) state[chainId], juce::dontSendNotification);
     chainButton.onClick = [this] { setChained (chainButton.getToggleState()); };
     hostSync.setToggleState ((bool) state[hostSyncId], juce::dontSendNotification);
@@ -176,13 +180,31 @@ void MuculatorEditor::setChained (bool on)
     bpmChanged();
 }
 
-void MuculatorEditor::nudgeBpm (double delta)
+void MuculatorEditor::nudgeBpm (int steps, double stepSize)
 {
-    if ((bool) state[hostSyncId])
+    if ((bool) state[hostSyncId] || steps == 0)
         return;
     const auto p = bpmFor (currentId());
-    const double base = p.ok() ? std::round (*p.value) : 120.0;
-    setBpmTextFor (currentId(), bpmToText (juce::jlimit (calc::kMinBpm, calc::kMaxBpm, base + delta)));
+    const double value = p.ok() ? *p.value : 120.0;
+    // Snap to the step grid first, so 120.5 goes to 121 / 120 rather than 121.5 / 119.5.
+    const double units = value / stepSize;
+    const double snapped = steps > 0 ? std::floor (units + 1e-6) : std::ceil (units - 1e-6);
+    const double next = (snapped + steps) * stepSize;
+    setBpmTextFor (currentId(), bpmToText (juce::jlimit (calc::kMinBpm, calc::kMaxBpm, std::round (next * 100.0) / 100.0)));
+}
+
+bool MuculatorEditor::keyPressed (const juce::KeyPress& key)
+{
+    // Text fields consume their own keys, so T only taps when no field is being edited.
+    if (key.getTextCharacter() == 't' || key.getTextCharacter() == 'T')
+    {
+        if (! key.getModifiers().isCommandDown() && ! key.getModifiers().isCtrlDown() && ! key.getModifiers().isAltDown())
+        {
+            tap();
+            return true;
+        }
+    }
+    return false;
 }
 
 void MuculatorEditor::tap()
