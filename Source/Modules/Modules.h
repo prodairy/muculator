@@ -12,6 +12,7 @@ public:
 
 private:
     void layoutContent (juce::Rectangle<int>) override;
+    juce::String helpText() const override;
     ui::ButtonGroup styles;
     ui::LedTable table;
     ui::LedReadout room;
@@ -28,6 +29,7 @@ public:
 
 private:
     void layoutContent (juce::Rectangle<int>) override;
+    juce::String helpText() const override;
     ui::LedTable table;
     ui::LedReadout summary;
     juce::Rectangle<int> tableArea, summaryArea;
@@ -43,6 +45,7 @@ public:
 
 private:
     void layoutContent (juce::Rectangle<int>) override;
+    juce::String helpText() const override;
     ui::ButtonGroup sources;
     ui::LedReadout result;
     ui::LedTable releaseTable;
@@ -61,6 +64,7 @@ public:
 
 private:
     void layoutContent (juce::Rectangle<int>) override;
+    juce::String helpText() const override;
     void refreshTranspose (Validator&);
     void refreshStretch (Validator&);
     void refreshFreq (Validator&);
@@ -115,6 +119,7 @@ public:
 
 private:
     void layoutContent (juce::Rectangle<int>) override;
+    juce::String helpText() const override;
     enum class Src { None, A, B, C };
     void updateGain (Src);
     void updateEq (Src);
@@ -146,6 +151,7 @@ public:
 
 private:
     void layoutContent (juce::Rectangle<int>) override;
+    juce::String helpText() const override;
     ui::LedField bars { "Bars" }, beats { "Beats / bar" }, rate { "Sample rate", "Hz" };
     juce::ComboBox beatUnit;
     ui::IllumButton hostRate { "HOST SR", ui::col::capGreen, true };

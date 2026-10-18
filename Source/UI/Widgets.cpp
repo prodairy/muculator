@@ -493,6 +493,95 @@ void WarningPanel::paint (juce::Graphics& g)
 }
 
 //==============================================================================
+HelpPanel::HelpPanel()
+{
+    setWantsKeyboardFocus (true);
+    closeButton.onClick = [this] { if (onClose) onClose(); };
+    addAndMakeVisible (closeButton);
+}
+
+void HelpPanel::setContent (const juce::String& t, const juce::String& text)
+{
+    title = t;
+    columns.clear();
+    for (auto rest = text;; rest = rest.fromFirstOccurrenceOf ("\n===\n", false, false))
+    {
+        columns.add (rest.upToFirstOccurrenceOf ("\n===\n", false, false));
+        if (! rest.contains ("\n===\n"))
+            break;
+    }
+    repaint();
+}
+
+bool HelpPanel::keyPressed (const juce::KeyPress& k)
+{
+    if (k == juce::KeyPress::escapeKey)
+    {
+        if (onClose) onClose();
+        return true;
+    }
+    return false;
+}
+
+void HelpPanel::resized()
+{
+    closeButton.setBounds (getLocalBounds().reduced (14).removeFromTop (26).removeFromRight (80));
+}
+
+void HelpPanel::paint (juce::Graphics& g)
+{
+    auto r = getLocalBounds().toFloat();
+    g.setColour (col::panelDark);
+    g.fillRoundedRectangle (r, 6.0f);
+    g.setColour (col::ledBlue.withAlpha (0.7f));
+    g.drawRoundedRectangle (r.reduced (1.0f), 6.0f, 1.5f);
+
+    auto area = getLocalBounds().reduced (20, 14);
+    auto top = area.removeFromTop (26);
+    g.setColour (col::ledBlue);
+    g.setFont (labelFont (15.0f));
+    g.drawText ("HOW TO USE:  " + title.toUpperCase(), top, juce::Justification::centredLeft);
+    area.removeFromTop (10);
+
+    const int n = juce::jmax (1, columns.size());
+    const int gap = 30;
+    const int colW = (area.getWidth() - gap * (n - 1)) / n;
+    for (int c = 0; c < columns.size(); ++c)
+    {
+        juce::AttributedString as;
+        as.setWordWrap (juce::AttributedString::byWord);
+        as.setLineSpacing (2.0f);
+        const auto body = col::silkscreen.withAlpha (0.88f);
+        for (auto line : juce::StringArray::fromLines (columns[c]))
+        {
+            if (line.startsWith ("# "))
+            {
+                as.append ("\n", labelFont (6.0f, false), body);
+                as.append (line.substring (2).toUpperCase() + "\n", labelFont (13.0f), col::capYellow);
+            }
+            else if (line.startsWith ("- ") && line.contains (": "))
+            {
+                as.append (line.substring (2).upToFirstOccurrenceOf (": ", true, false), labelFont (14.0f), col::silkscreen);
+                as.append (line.fromFirstOccurrenceOf (": ", false, false) + "\n", labelFont (14.0f, false), body);
+            }
+            else
+            {
+                as.append (line + "\n", labelFont (14.0f, false), body);
+            }
+        }
+        juce::TextLayout layout;
+        layout.createLayout (as, (float) colW);
+        auto colArea = area.withX (area.getX() + c * (colW + gap)).withWidth (colW);
+        layout.draw (g, colArea.toFloat());
+        if (c > 0)
+        {
+            g.setColour (col::silkDim.withAlpha (0.3f));
+            g.fillRect (colArea.getX() - gap / 2, colArea.getY(), 1, colArea.getHeight());
+        }
+    }
+}
+
+//==============================================================================
 ButtonGroup::ButtonGroup (juce::StringArray labels, juce::Colour cap, int radioId, bool v) : vertical (v)
 {
     for (int i = 0; i < labels.size(); ++i)

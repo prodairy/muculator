@@ -110,3 +110,23 @@ void ReverbModule::layoutContent (juce::Rectangle<int> r)
     table.setBounds (tableArea.reduced (8).withTrimmedTop (22));
     room.setBounds (roomArea.reduced (8).withTrimmedTop (22));
 }
+
+juce::String ReverbModule::helpText() const
+{
+    return R"(# What it does
+Turns the tempo into reverb settings that breathe with the song: pre-delay, decay and total length for five reverb styles, plus a rough room size.
+# How to use
+1. Set the tempo in the top bar, or turn on HOST SYNC.
+2. Pick a style on the left.
+3. The amber row is the recommended length for that style. Click any row to pick another.
+4. Type PRE-DELAY and DECAY into your reverb plugin. Click a value to copy it.
+# Example
+128 BPM, HALL: the recommended 1/1 row lasts 1875 ms. Pre-delay is a 1/64 note (29.3 ms) and decay is the rest (1845.7 ms).
+===
+# Terms
+- PRE-DELAY: the gap between the dry sound and the start of the reverb. It keeps the source clear. Here it is a 1/64 to 1/512 note and never more than 25 % of the total.
+- DECAY: how long the tail rings after the pre-delay (called decay, size or RT60 on most reverbs).
+- TOTAL: pre-delay + decay. It equals the note length of the row, so the tail ends on the grid.
+- ROOM SIZE: a room that would ring this long, from the Sabine formula. For orientation only.
+- PLATE: a reverb made with a metal sheet; its room size is only an equivalent.)";
+}

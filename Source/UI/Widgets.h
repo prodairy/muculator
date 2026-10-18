@@ -163,6 +163,27 @@ private:
 };
 
 //==============================================================================
+/** "How to use" overlay. Text format: "# " starts a heading, "- TERM: text" is a term with a
+    bold name, a line "===" starts the second column. Closes with CLOSE or Esc. */
+class HelpPanel final : public juce::Component
+{
+public:
+    HelpPanel();
+    void setContent (const juce::String& title, const juce::String& text);
+    std::function<void()> onClose;
+
+    void paint (juce::Graphics&) override;
+    void resized() override;
+    bool keyPressed (const juce::KeyPress&) override;
+    void mouseDown (const juce::MouseEvent&) override {} // keeps clicks away from the module underneath
+
+private:
+    juce::String title;
+    juce::StringArray columns;
+    IllumButton closeButton { "CLOSE", col::capWhite, false };
+};
+
+//==============================================================================
 /** Bundles an IllumButton radio group. */
 class ButtonGroup final : public juce::Component
 {

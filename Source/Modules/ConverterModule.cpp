@@ -289,3 +289,24 @@ void ConverterModule::layoutContent (juce::Rectangle<int> r)
     outArea.removeFromTop (6);
     tOut.setBounds (outArea);
 }
+
+juce::String ConverterModule::helpText() const
+{
+    return R"(# What it does
+Four converters in one place. Type in any field of a panel and the other fields of that panel follow.
+# How to use
+- dB <> LINEAR GAIN: a level change as a multiplier.
+- EQ: Q <> bandwidth in octaves, with the -3 dB edges in Hz.
+- ms <> Hz <> SAMPLES: times at a sample rate. HOST SR (lit) follows the session; typing a rate turns it off.
+- DISTANCE <> ms: how long sound takes to travel, for lining up mics and speakers.
+Click a value to copy it.
+# Example
+-6 dB = x0.501. Q 1.41 is about 1 octave. 10 ms = 480 samples at 48 kHz. A mic 3 m further away hears the source 8.7 ms later (20 C).
+===
+# Terms
+- dB: a ratio on a log scale. +6 dB is about twice the amplitude, +20 dB is ten times.
+- Q: how narrow an EQ band is. Higher Q = narrower band. Q 1.41 is about one octave wide.
+- BANDWIDTH: the width between the two -3 dB points, in octaves.
+- SAMPLE RATE: samples per second (44100, 48000, 96000...).
+- SPEED OF SOUND: about 343 m/s at 20 C, a little faster in warm air.)";
+}

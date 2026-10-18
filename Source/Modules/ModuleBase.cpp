@@ -4,6 +4,32 @@ ModuleBase::ModuleBase (const juce::String& i, const juce::String& t, ModuleCont
     : ctx (c), id (i), title (t)
 {
     addChildComponent (inputWarning);
+    addAndMakeVisible (helpButton);
+    addChildComponent (help);
+    helpButton.setTooltip ("How to use this module");
+    helpButton.onClick = [this] { showHelp (helpButton.getToggleState()); };
+    help.onClose = [this] { showHelp (false); };
+}
+
+void ModuleBase::showHelp (bool shouldShow)
+{
+    helpButton.setToggleState (shouldShow, juce::dontSendNotification);
+    if (shouldShow)
+    {
+        help.setContent (title, helpText());
+        help.setVisible (true);
+        help.toFront (true);
+    }
+    else
+    {
+        help.setVisible (false);
+    }
+}
+
+void ModuleBase::updateHelp()
+{
+    if (help.isVisible())
+        help.setContent (title, helpText());
 }
 
 void ModuleBase::showErrors (const juce::StringArray& errors)
@@ -23,7 +49,7 @@ void ModuleBase::paint (juce::Graphics& g)
 
     if (headerBadge.isNotEmpty())
     {
-        auto badge = header.removeFromRight (190).reduced (0, 3);
+        auto badge = header.removeFromRight (190).reduced (0, 3);  // resized() leaves 200 px for it
         ui::drawScreen (g, badge.toFloat());
         g.setColour (ui::col::ledGreen);
         g.setFont (ui::ledFont (14.0f));
@@ -38,7 +64,9 @@ void ModuleBase::resized()
     header.removeFromLeft (200);
     if (headerBadge.isNotEmpty())
         header.removeFromRight (200);
+    helpButton.setBounds (header.removeFromRight (34).reduced (2, 3));
     inputWarning.setBounds (header.reduced (6, 0));
     r.removeFromTop (6);
+    help.setBounds (r);
     layoutContent (r);
 }

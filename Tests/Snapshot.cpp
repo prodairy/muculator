@@ -41,6 +41,24 @@ int main (int argc, char** argv)
     ed->setBpmTextFor ("pitch", "126");
     save (*ed, dir, "4e_stretch_microtone");
 
+    // "How to use" panels
+    pitch->showHelp (true);
+    save (*ed, dir, "4f_stretch_help");
+    pitch->selectTab (3);
+    save (*ed, dir, "4g_harmonics_help");
+    pitch->showHelp (false);
+    for (int i = 0; i < MuculatorEditor::numModules; ++i)
+    {
+        if (i == 3) continue;
+        ed->selectModule (i);
+        ed->getModule (i)->showHelp (true);
+        save (*ed, dir, juce::String (i + 1) + "h_help");
+        ed->getModule (i)->showHelp (false);
+    }
+    ed->setBpmTextFor ("pitch", "120");
+    ed->selectModule (3);
+    pitch->selectTab (1);
+
     // Invalid inputs must not crash
     for (auto bad : { "0", "", "abc", "-5", "1e999", "99999" })
     {

@@ -29,11 +29,18 @@ public:
     void paint (juce::Graphics&) override;
     void resized() override;
 
+    /** Opens or closes the "How to use" panel. */
+    void showHelp (bool shouldShow);
+
 protected:
     /** Area below the header for the module's content. */
     virtual void layoutContent (juce::Rectangle<int> area) = 0;
     /** Optional readout drawn at the right of the header (e.g. "A4 = 440 Hz"). */
     juce::String headerBadge;
+    /** Text for the "How to use" panel (format: see ui::HelpPanel). */
+    virtual juce::String helpText() const = 0;
+    /** Call when helpText() changes (e.g. another tab) so an open panel follows. */
+    void updateHelp();
 
     calc::Parsed bpm() const { return ctx.bpmFor (id); }
     juce::ValueTree state() { return ctx.moduleState (id); }
@@ -46,6 +53,8 @@ protected:
 
 private:
     juce::String id, title;
+    ui::IllumButton helpButton { "?", ui::col::capBlue, true };
+    ui::HelpPanel help;
 };
 
 /** Collects parse errors while reading fields. */

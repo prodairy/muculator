@@ -107,6 +107,7 @@ void PitchModule::selectTab (int t)
     updateVisibility();
     resized();
     refresh();
+    updateHelp();
     repaint();
 }
 
@@ -410,5 +411,79 @@ void PitchModule::layoutContent (juce::Rectangle<int> r)
             hmTable.setBounds (out);
             break;
         }
+    }
+}
+
+juce::String PitchModule::helpText() const
+{
+    switch (tab)
+    {
+        case 0:
+            return R"(# What it does
+Shifts a note by semitones and cents and shows the new note, its frequency and how far it is from the nearest note.
+# How to use
+1. Choose the source note.
+2. Enter the shift in semitones (-96 to 96) and cents (-100 to 100).
+3. Read the new note, the deviation and the frequency on the right. Click a value to copy it.
+# Example
+A4 + 3 semitones = C5, 523.25 Hz.
+===
+# Terms
+- SEMITONE (st): one key on the piano; 12 make an octave.
+- CENT (ct): 1/100 of a semitone.
+- DEVIATION: how far the result is from the nearest note, in cents.
+- A4 REFERENCE: the frequency of A4 that every note is tuned from (440 Hz is the standard). The ... button lists 432, 440, 442 and 443 Hz.
+- NOTE NAMES: write black keys with sharps (C#) or flats (Db).)";
+        case 1:
+            return R"(# What it does
+Shows what happens to the pitch of a sample when you play it at another tempo by changing its speed (varispeed), and warns when it lands between two notes.
+# How to use
+1. Choose the sample's original note, or type its frequency with FREQ.
+2. Enter the OLD BPM the sample was made at.
+3. NEW BPM is the tempo in the top bar.
+4. Read the new note. A MICROTONE WARNING appears when it is 10 cents or more off a note, with the BPM that lands exactly on each neighbour note.
+# Example
+An A4 sample made at 120 BPM, played at 126 BPM: 462 Hz, -15.5 ct from A#4. Set 127.14 BPM to land on A#4.
+===
+# Terms
+- VARISPEED: speed and pitch change together, like tape or a turntable. Pitch ratio = new BPM / old BPM. Time-stretch (pitch kept) is not covered here.
+- SEMITONE (st): one key on the piano; 12 make an octave.
+- CENT (ct): 1/100 of a semitone. Around 10 ct a note starts to sound out of tune against others.
+- MICROTONE: a pitch between two notes of the 12-note scale.
+- A4 REFERENCE: the frequency of A4 that every note is tuned from (440 Hz is the standard). The ... button lists 432, 440, 442 and 443 Hz.
+- NOTE NAMES: write black keys with sharps (C#) or flats (Db).)";
+        case 2:
+            return R"(# What it does
+Finds the nearest note to any frequency and shows the deviation in cents, the period, the wavelength and how many samples one cycle lasts.
+# How to use
+1. Type a frequency in Hz, for example a resonance you found with an EQ.
+2. Read the nearest note and how far off it is. Click a value to copy it.
+# Example
+432 Hz is A4 -31.8 ct (with A4 = 440 Hz).
+===
+# Terms
+- CENT (ct): 1/100 of a semitone.
+- PERIOD: the length of one cycle (1000 / Hz) in ms.
+- WAVELENGTH: the length of one cycle in air at 20 C.
+- CYCLE: samples in one cycle at the session sample rate.
+- A4 REFERENCE: the frequency of A4 that every note is tuned from (440 Hz is the standard). The ... button lists 432, 440, 442 and 443 Hz.
+- NOTE NAMES: write black keys with sharps (C#) or flats (Db).)";
+        default:
+            return R"(# What it does
+Lists the harmonic series of a note: the frequencies that make up its tone, the note each one is closest to and how far off it is.
+# How to use
+1. Choose the fundamental note, or type a frequency with FREQ.
+2. SERIES lists all, only odd or only even harmonics.
+3. WAVEFORM LEVELS adds each harmonic's level in an ideal saw, square or triangle wave, and picks the matching series.
+4. COUNT lists 16, 32 or 64 harmonics; scroll the table with the mouse wheel. Red rows are 10 cents or more off a note.
+# Example
+A2 (110 Hz): harmonic 3 is E4 +2.0 ct, harmonic 7 is G5 -31.2 ct.
+===
+# Terms
+- HARMONIC: a whole-number multiple of the fundamental (2x, 3x...). Harmonic 1 is the fundamental itself.
+- ODD / EVEN: odd harmonics (3, 5, 7) give a hollow, square-like tone; even ones (2, 4, 6) add octaves and warmth.
+- SAW / SQUARE / TRIANGLE: saw has every harmonic at 1/n; square has odd ones at 1/n; triangle has odd ones at 1/n^2. LEVEL dB is relative to the fundamental.
+- A4 REFERENCE: the frequency of A4 that every note is tuned from (440 Hz is the standard). The ... button lists 432, 440, 442 and 443 Hz.
+- NOTE NAMES: write black keys with sharps (C#) or flats (Db).)";
     }
 }
