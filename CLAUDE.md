@@ -4,6 +4,12 @@ Pass-through VST3/AU/Standalone plugin (JUCE 9, C++20) with tempo-synced music-p
 Public, AGPLv3, repo `prodairy/muculator`. The owner is new to programming and git: explain steps
 in plain Turkish, keep the UI text in English.
 
+## Working with the owner
+
+- **Planned work lives in `ROADMAP.md` (local only, git-ignored; never commit it).** Read it when the owner names a feature or bug ("let's do the host sync item").
+- **Do not start coding unless the owner asks for it explicitly.** When they share ideas, bug reports or wishes, write them into `ROADMAP.md` (marked 🧑 for the owner, 🤖 for Claude) and stop. Implement only after an explicit "yapalım" / "do it" for that item.
+- Before risky or public actions (force-push, release tags, publishing), explain what will happen and wait for a yes.
+
 ## Build & test
 
 ```bash
@@ -48,5 +54,5 @@ auval -v aufx Mclc Mucu                                   # AU validation (macOS
 
 - JUCE code style: 4 spaces, a space before `(`, `juce::` prefixes, no exceptions for control flow.
 - New formula → `Calc.cpp` + a test. New module → subclass `ModuleBase`, add it in `MuculatorEditor::buildModules`, and update `moduleIds` / `moduleNames` and the snapshot tool.
-- Commits from this machine: name `prodairy`, email `344521037+prodairy@users.noreply.github.com` (keep the real email private).
+- Commits from this machine: name `prodairy`, email `344521037+prodairy@users.noreply.github.com`. The owner's other public identity (`airy` / `airysocial@pm.me`, used by GitHub web merges) is intentional and fine to leave visible; do not rewrite history to remove it.
 - Work on a branch, open a PR, and let CI pass. Release by tagging `vX.Y.Z` on `main`.
