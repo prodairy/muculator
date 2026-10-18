@@ -6,3 +6,6 @@ shots/
 .vs/
 .vscode/
 .idea/
+
+# Private planning notes (kept local only)
+ROADMAP.md

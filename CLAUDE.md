@@ -6,7 +6,7 @@ in plain Turkish, keep the UI text in English.
 
 ## Working with the owner
 
-- **Planned work lives in `ROADMAP.md`.** Read it when the owner names a feature or bug ("let's do the host sync item").
+- **Planned work lives in `ROADMAP.md` (local only, git-ignored; never commit it).** Read it when the owner names a feature or bug ("let's do the host sync item").
 - **Do not start coding unless the owner asks for it explicitly.** When they share ideas, bug reports or wishes, write them into `ROADMAP.md` (marked 🧑 for the owner, 🤖 for Claude) and stop. Implement only after an explicit "yapalım" / "do it" for that item.
 - Before risky or public actions (force-push, release tags, publishing), explain what will happen and wait for a yes.
 
