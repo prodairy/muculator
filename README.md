@@ -19,9 +19,11 @@ Every producer keeps a browser tab open for "BPM to ms", "what note is 462 Hz" o
 Muculator puts all of that inside your DAW, styled like a console channel strip: dark panel, LED displays, lit buttons.
 
 - **Audio passes through untouched.** Drop it on any track; it costs no DSP.
-- **Follows your DAW tempo** (Host Sync), or tap it in.
+- **Follows your DAW tempo** (Host Sync), or tap it in (button or the `T` key). Drag or scroll the BPM display to change it; hold Shift for 0.1 steps.
 - **Chain mode:** one BPM drives every module, or unlink and give each module its own.
 - **Never crashes on bad input.** Type `0`, `abc` or leave a field empty and you get a clear warning instead.
+- **Click any value to copy it**, then paste it into your EQ, delay or synth.
+- **Built-in help:** the **?** button on every module explains what it does, how to use it and the terms it uses.
 
 ## Features
 
@@ -30,7 +32,7 @@ Muculator puts all of that inside your DAW, styled like a console channel strip:
 | **Reverb** | Pre-delay, decay and total time for Small Room, Room, Large Room, Plate and Hall, synced to BPM. The recommended row is highlighted, you can click any row, and it shows an estimated room size (Sabine). |
 | **Delay** | Every note value from 1/1 to 1/512: normal, dotted and triplet, in **ms and Hz**. |
 | **Compressor** | Attack based on the source (kick, snare, bass, vocal, bus…) and release based on the tempo, with warnings when the release gets too short. |
-| **Pitch** | **Transpose** (note ± semitones/cents), **Stretch**, **Frequency → Note**, **Harmonic series**. Reference A4 = 440 Hz is always on screen. |
+| **Pitch** | **Transpose** (note ± semitones/cents), **Stretch**, **Frequency → Note**, **Harmonic series** (all / odd / even, saw / square / triangle levels, 16 to 64 harmonics). Adjustable A4 reference (440 Hz by default, 432 / 442 / 443 or any value), always on screen. Notes with sharps or flats. |
 | **Converters** | dB ↔ linear gain · EQ Q ↔ octaves ↔ Hz · ms ↔ Hz ↔ samples · distance ↔ ms (mic/speaker alignment). |
 | **Loop** | Bars + time signature → ms, seconds and exact sample count. |
 
@@ -99,7 +101,8 @@ Tests/                   unit tests + snapshot tool
 
 ## Assumptions & formulas
 
-- 12-TET, A4 = 440 Hz, C4 = MIDI 60, notes written with sharps.
+- 12-TET, A4 = 440 Hz by default (adjustable from 400 to 480 Hz), C4 = MIDI 60, notes written with sharps unless you pick flats.
+- Ideal waveform harmonics: saw 1/n (all), square 1/n (odd), triangle 1/n² (odd).
 - Stretch = varispeed (tape-style): pitch ratio = new BPM / old BPM.
 - Microtone warning when the shown deviation is ≥ 10 cents.
 - Reverb pre-delay is snapped to the 1/64 to 1/512 note closest to each style's typical value, and is never more than 25 % of the tail. Room size comes from Sabine's formula with 1.59 : 1.26 : 1 proportions.
@@ -125,7 +128,8 @@ VST is a registered trademark of Steinberg Media Technologies GmbH.
 - **Reverb:** Tarza ve BPM'e göre pre-delay, decay ve toplam süre; önerilen satır işaretli; tahmini oda ölçüleri.
 - **Delay:** 1/1'den 1/512'ye kadar normal, noktalı ve triplet süreler (ms ve Hz).
 - **Compressor:** Kaynağa göre attack, BPM'e göre release.
-- **Pitch:** Transpose, Stretch, frekanstan nota bulma, harmonik serisi (A4 = 440 Hz hep ekranda).
+- **Pitch:** Transpose, Stretch, frekanstan nota bulma, harmonik serisi (tümü / tek / çift, saw / square / triangle seviyeleri, 16-64 harmonik). A4 referansı ayarlanabilir (varsayılan 440 Hz) ve hep ekranda; notalar diyez ya da bemol yazılabilir.
+- **Kolaylıklar:** Her modülde **?** yardım paneli; bir değere tıklayınca panoya kopyalanır; BPM ekranı sürükleyerek ya da tekerlekle değişir (Shift ile 0.1 adım); `T` tuşu TAP yapar.
 - **Converters:** dB ↔ gain, Q ↔ oktav ↔ Hz, ms ↔ Hz ↔ sample, mesafe ↔ ms.
 - **Loop:** Bar sayısından ms, saniye ve sample sayısı.
 

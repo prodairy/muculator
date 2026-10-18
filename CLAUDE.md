@@ -33,7 +33,7 @@ auval -v aufx Mclc Mucu                                   # AU validation (macOS
 | `Source/Modules/ModuleBase.*` | `ModuleContext` (BPM, chain, sample rate, per-module ValueTree) and the `Validator` helper. |
 | `Source/Modules/*Module.cpp` | One module each: Reverb, Delay, Compressor, Pitch (4 tabs), Converter, Loop. All declared in `Modules.h`. |
 | `Source/UI/ConsoleLookAndFeel.*` | Console look: colours (`ui::col`), fonts, `drawSection`, `drawScreen`, `drawLed`. |
-| `Source/UI/Widgets.*` | `IllumButton`, `ChainButton`, `LedField`, `NotePicker`, `LedReadout`, `LedTable`, `WarningPanel`, `ButtonGroup`. |
+| `Source/UI/Widgets.*` | `IllumButton`, `ChainButton`, `LedField` (drag / wheel via `setNudger`), `NotePicker`, `LedReadout`, `LedTable` (scrolls; click copies a value), `WarningPanel`, `HelpPanel`, `ButtonGroup`. |
 | `Source/PluginEditor.*` | Top bar (BPM, TAP, CHAIN, HOST SYNC), module switcher, implements `ModuleContext`. |
 | `Source/PluginProcessor.*` | Pass-through audio; reads host BPM and sample rate into atomics; stores state as a ValueTree. |
 | `Tests/Snapshot.cpp` | Headless renderer + invalid-input smoke test. |
@@ -41,10 +41,13 @@ auval -v aufx Mclc Mucu                                   # AU validation (macOS
 
 ## Decisions (do not change without asking)
 
-- 12-TET, **A4 = 440 Hz**, C4 = MIDI 60, notes written with sharps.
+- 12-TET, C4 = MIDI 60. **A4 = 440 Hz by default**; the Pitch module's `a4` property (400 to 480 Hz) changes it, and every pitch formula in `Calc` takes it as a parameter. Sharps by default; Pitch `flats` switches to Db, Eb...
+- Harmonic count = rows listed after the odd / even filter (16 odd = harmonics 1 to 31).
 - Stretch is **varispeed**: pitch ratio = new BPM / old BPM. Microtone warning when the **displayed** deviation (rounded to 0.1 ct) is ≥ `kMicrotoneThresholdCents` (10). The warning names both neighbour notes, the cents off each, and the BPM needed to land on each.
 - BPM is valid from 1 to 999. Number parsing accepts a comma as the decimal separator. Invalid input must never crash: mark the field red (`LedField::setInvalid`), show the error through `showErrors`, and display `--`.
-- CHAIN on: one shared `globalBpm`. CHAIN off: each module keeps its own `bpm` child property, and the top-bar BPM edits the visible module. HOST SYNC locks the BPM field; TAP turns sync off.
+- CHAIN on: one shared `globalBpm`. CHAIN off: each module keeps its own `bpm` child property, and the top-bar BPM edits the visible module. HOST SYNC locks the BPM field and is applied again when the visible module changes; TAP turns sync off.
+- The host may stop calling `processBlock` (e.g. silent tracks). After 1 s without a block the HOST TEMPO readout shows IDLE and the footer shows a hint.
+- Sample-rate fields (Converter, Loop) follow the host while their HOST SR button is lit; typing a rate turns it off.
 - Only one module is visible at a time. Fixed window size of 1000×680.
 - Reverb pre-delay is snapped to a 1/64 to 1/512 note and is at most 25 % of the total. Room size uses Sabine with 1.59 : 1.26 : 1 proportions.
 - State: modules read and write their own ValueTree child. `setStateInformation` merges into the existing tree and bumps `loadCount` so an open editor rebuilds.
@@ -53,6 +56,6 @@ auval -v aufx Mclc Mucu                                   # AU validation (macOS
 ## Conventions
 
 - JUCE code style: 4 spaces, a space before `(`, `juce::` prefixes, no exceptions for control flow.
-- New formula → `Calc.cpp` + a test. New module → subclass `ModuleBase`, add it in `MuculatorEditor::buildModules`, and update `moduleIds` / `moduleNames` and the snapshot tool.
+- New formula → `Calc.cpp` + a test. New module → subclass `ModuleBase` (including `helpText()` for the **?** panel), add it in `MuculatorEditor::buildModules`, and update `moduleIds` / `moduleNames` and the snapshot tool.
 - Commits from this machine: name `prodairy`, email `344521037+prodairy@users.noreply.github.com`. The owner's other public identity (`airy` / `airysocial@pm.me`, used by GitHub web merges) is intentional and fine to leave visible; do not rewrite history to remove it.
 - Work on a branch, open a PR, and let CI pass. Release by tagging `vX.Y.Z` on `main`.

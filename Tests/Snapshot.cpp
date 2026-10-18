@@ -96,6 +96,15 @@ int main (int argc, char** argv)
     ed->selectModule (0);
     save (*ed, dir, "7_invalid_bpm");
 
+    // Harmonics with a square wave, 64 harmonics, flats and A4 = 432 Hz (rebuilds the modules from state)
+    auto pitchState = proc.state.getOrCreateChildWithName ("pitch", nullptr);
+    for (auto [prop, value] : { std::pair<const char*, juce::var> { "hmWave", 2 }, { "hmSet", 1 }, { "hmCount", 2 }, { "flats", true },
+                                { "a4", "432" }, { "tab", 3 } })
+        pitchState.setProperty (prop, value, nullptr);
+    proc.state.setProperty ("module", 3, nullptr);
+    proc.state.setProperty ("loadCount", (int) proc.state.getProperty ("loadCount", 0) + 1, nullptr);
+    save (*ed, dir, "4h_harmonics_square_flats_432");
+
     // state round-trip
     juce::MemoryBlock mb;
     proc.getStateInformation (mb);
