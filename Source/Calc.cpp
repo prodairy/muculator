@@ -146,17 +146,31 @@ StretchResult stretch (double oldBpm, double oldHz, double newBpm, double thresh
     return r;
 }
 
-std::vector<Harmonic> harmonics (double fundamentalHz, int count, double maxHz)
+std::vector<Harmonic> harmonics (double fundamentalHz, int count, HarmonicSet set, double maxHz)
 {
     std::vector<Harmonic> out;
-    for (int n = 1; n <= count; ++n)
+    for (int n = 1; (int) out.size() < count; ++n)
     {
+        if ((set == HarmonicSet::Odd && n % 2 == 0) || (set == HarmonicSet::Even && n % 2 == 1))
+            continue;
         const double f = fundamentalHz * n;
         if (f > maxHz)
             break;
         out.push_back ({ n, f, analyse (f) });
     }
     return out;
+}
+
+double harmonicLevel (Waveform w, int n)
+{
+    if (n < 1 || (w != Waveform::Saw && n % 2 == 0))
+        return 0.0;
+    return w == Waveform::Triangle ? 1.0 / ((double) n * n) : 1.0 / n;
+}
+
+HarmonicSet harmonicSetFor (Waveform w)
+{
+    return w == Waveform::Saw ? HarmonicSet::All : HarmonicSet::Odd;
 }
 
 //==============================================================================

@@ -280,6 +280,7 @@ void LedTable::setRows (std::vector<juce::StringArray> r)
 {
     rows = std::move (r);
     rowColours.clear();
+    firstRow = juce::jlimit (0, maxFirstRow(), firstRow);
     repaint();
 }
 
@@ -288,21 +289,65 @@ void LedTable::setRowColour (int row, juce::Colour c) { rowColours[row] = c; rep
 float LedTable::rowHeight() const
 {
     if (rows.empty()) return 20.0f;
-    return juce::jlimit (14.0f, 30.0f, ((float) getHeight() - headerHeight() - 8.0f) / (float) rows.size());
+    return juce::jlimit (18.0f, 30.0f, ((float) getHeight() - headerHeight() - 8.0f) / (float) rows.size());
+}
+
+int LedTable::visibleRows() const
+{
+    return juce::jmax (1, (int) (((float) getHeight() - headerHeight() - 8.0f) / rowHeight()));
+}
+
+void LedTable::scrollTo (int row)
+{
+    row = juce::jlimit (0, maxFirstRow(), row);
+    if (row != firstRow)
+    {
+        firstRow = row;
+        hover = -1;
+        repaint();
+    }
 }
 
 int LedTable::rowAt (juce::Point<int> p) const
 {
     const float y = (float) p.y - 4.0f - headerHeight();
     if (y < 0) return -1;
-    const int r = (int) (y / rowHeight());
+    const int visible = (int) (y / rowHeight());
+    if (visible >= visibleRows()) return -1;
+    const int r = firstRow + visible;
     return r < (int) rows.size() ? r : -1;
+}
+
+void LedTable::mouseWheelMove (const juce::MouseEvent& e, const juce::MouseWheelDetails& w)
+{
+    if (maxFirstRow() == 0)
+    {
+        Component::mouseWheelMove (e, w);
+        return;
+    }
+    // Trackpads send many small deltas: add them up and move one row per step.
+    wheelAccum += w.deltaY * (w.isReversed ? -1.0f : 1.0f);
+    const float step = w.isSmooth ? 0.04f : 0.0f;
+    int rowsToMove = 0;
+    if (step == 0.0f)
+    {
+        rowsToMove = wheelAccum > 0 ? -3 : 3;
+        wheelAccum = 0;
+    }
+    else
+    {
+        while (wheelAccum >= step)  { --rowsToMove; wheelAccum -= step; }
+        while (wheelAccum <= -step) { ++rowsToMove; wheelAccum += step; }
+    }
+    scrollTo (firstRow + rowsToMove);
 }
 
 void LedTable::paint (juce::Graphics& g)
 {
     drawScreen (g, getLocalBounds().toFloat());
     auto area = getLocalBounds().toFloat().reduced (6.0f, 4.0f);
+    const bool scrolls = maxFirstRow() > 0;
+    const auto barArea = scrolls ? area.removeFromRight (6.0f).withTrimmedLeft (3.0f) : juce::Rectangle<float>();
 
     float total = 0;
     for (auto w : widths) total += w;
@@ -321,7 +366,18 @@ void LedTable::paint (juce::Graphics& g)
     g.drawHorizontalLine ((int) header.getBottom(), area.getX(), area.getRight());
 
     const float rh = rowHeight();
-    for (int i = 0; i < (int) rows.size(); ++i)
+    const int lastRow = juce::jmin ((int) rows.size(), firstRow + visibleRows());
+    if (scrolls)
+    {
+        const auto track = barArea.withY (area.getY()).withHeight (rh * (float) visibleRows());
+        g.setColour (col::silkDim.withAlpha (0.15f));
+        g.fillRoundedRectangle (track, 1.5f);
+        const float n = (float) rows.size();
+        g.setColour (col::ledAmber.withAlpha (0.6f));
+        g.fillRoundedRectangle (track.withY (track.getY() + track.getHeight() * (float) firstRow / n)
+                                     .withHeight (track.getHeight() * (float) visibleRows() / n), 1.5f);
+    }
+    for (int i = firstRow; i < lastRow; ++i)
     {
         auto row = area.removeFromTop (rh);
         if (i == recommended)

@@ -88,7 +88,7 @@ private:
     ui::LedReadout fnOut;
 
     // harmonics
-    ui::ButtonGroup hmMode;
+    ui::ButtonGroup hmMode, hmSet, hmWave, hmCount;
     ui::NotePicker hmNote { "Fundamental note" };
     ui::LedField hmFreq { "Fundamental", "Hz" };
     ui::LedTable hmTable;

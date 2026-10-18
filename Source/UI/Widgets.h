@@ -104,7 +104,8 @@ private:
 };
 
 //==============================================================================
-/** LED table with a recommended row (amber band) and a user-selected row (green frame). */
+/** LED table with a recommended row (amber band) and a user-selected row (green frame).
+    Scrolls with the mouse wheel when the rows do not fit. */
 class LedTable final : public juce::Component
 {
 public:
@@ -121,6 +122,7 @@ public:
     void mouseDown (const juce::MouseEvent&) override;
     void mouseMove (const juce::MouseEvent&) override;
     void mouseExit (const juce::MouseEvent&) override;
+    void mouseWheelMove (const juce::MouseEvent&, const juce::MouseWheelDetails&) override;
 
 private:
     juce::StringArray headers;
@@ -128,9 +130,14 @@ private:
     std::vector<juce::StringArray> rows;
     std::map<int, juce::Colour> rowColours;
     int recommended = -1, selected = -1, hover = -1;
+    int firstRow = 0;          // scroll position
+    float wheelAccum = 0;
     bool selectable = false;
     float headerHeight() const { return 22.0f; }
     float rowHeight() const;
+    int visibleRows() const;
+    int maxFirstRow() const { return juce::jmax (0, (int) rows.size() - visibleRows()); }
+    void scrollTo (int row);
     int rowAt (juce::Point<int>) const;
 };
 
@@ -163,6 +170,7 @@ public:
     IllumButton& button (int i) { return *buttons[(size_t) i]; }
     int size() const { return (int) buttons.size(); }
     void setColumns (int c) { columns = c; resized(); }
+    void setTooltip (const juce::String& t) { for (auto& b : buttons) b->setTooltip (t); }
     std::function<void (int)> onSelect;
     void resized() override;
 

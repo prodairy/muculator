@@ -22,7 +22,10 @@ PitchModule::PitchModule (ModuleContext& c)
     : ModuleBase ("pitch", "Pitch", c),
       tabs ({ "TRANSPOSE", "STRETCH", "FREQ > NOTE", "HARMONICS" }, col::capWhite, 301, false),
       stMode ({ "NOTE", "FREQ" }, col::capGreen, 302, false),
-      hmMode ({ "NOTE", "FREQ" }, col::capGreen, 303, false)
+      hmMode ({ "NOTE", "FREQ" }, col::capGreen, 303, false),
+      hmSet ({ "ALL", "ODD", "EVEN" }, col::capWhite, 304, false),
+      hmWave ({ "OFF", "SAW", "SQUARE", "TRI" }, col::capYellow, 305, false),
+      hmCount ({ "16", "32", "64" }, col::capWhite, 306, false)
 {
     headerBadge = "A4 = " + str (calc::fmt (calc::kA4Hz, 2)) + " Hz";
 
@@ -38,11 +41,14 @@ PitchModule::PitchModule (ModuleContext& c)
     hmFreq.bind (s, "hmFreq", "110");
     stMode.setSelected ((int) s.getProperty ("stMode", 0), false);
     hmMode.setSelected ((int) s.getProperty ("hmMode", 0), false);
+    hmSet.setSelected ((int) s.getProperty ("hmSet", 0), false);
+    hmWave.setSelected ((int) s.getProperty ("hmWave", 0), false);
+    hmCount.setSelected ((int) s.getProperty ("hmCount", 0), false);
     stNewBpm.setText (ctx.bpmTextFor (getId()));
 
     for (auto* comp : std::initializer_list<juce::Component*> {
              &tabs, &tpNote, &tpSemis, &tpCents, &tpOut, &stMode, &stNote, &stFreq, &stOldBpm, &stNewBpm,
-             &stOut, &fnFreq, &fnOut, &hmMode, &hmNote, &hmFreq, &hmTable })
+             &stOut, &fnFreq, &fnOut, &hmMode, &hmSet, &hmWave, &hmCount, &hmNote, &hmFreq, &hmTable })
         addChildComponent (comp);
     addChildComponent (microtone);
     tabs.setVisible (true);
@@ -54,6 +60,23 @@ PitchModule::PitchModule (ModuleContext& c)
         n->onChange = [this] { refresh(); };
     stMode.onSelect = [this] (int i) { state().setProperty ("stMode", i, nullptr); updateVisibility(); refresh(); };
     hmMode.onSelect = [this] (int i) { state().setProperty ("hmMode", i, nullptr); updateVisibility(); refresh(); };
+    hmSet.onSelect = [this] (int i) { state().setProperty ("hmSet", i, nullptr); refresh(); };
+    hmCount.onSelect = [this] (int i) { state().setProperty ("hmCount", i, nullptr); refresh(); };
+    hmWave.onSelect = [this] (int i)
+    {
+        // A waveform also picks the harmonics it contains (saw: all, square / triangle: odd).
+        state().setProperty ("hmWave", i, nullptr);
+        if (i > 0)
+        {
+            const int set = calc::harmonicSetFor ((calc::Waveform) (i - 1)) == calc::HarmonicSet::All ? 0 : 1;
+            hmSet.setSelected (set, false);
+            state().setProperty ("hmSet", set, nullptr);
+        }
+        refresh();
+    };
+    hmSet.setTooltip ("Which harmonics to list: all, odd only (1, 3, 5...) or even only (2, 4, 6...)");
+    hmWave.setTooltip ("Adds the ideal level of each harmonic for a saw, square or triangle wave");
+    hmCount.setTooltip ("How many harmonics to list (scroll the table for more)");
 
     stNewBpm.setFontHeight (20.0f);
     stOut.setLineHeight (24.0f);
@@ -92,6 +115,7 @@ void PitchModule::updateVisibility()
 
     const bool hm = tab == 3, hmByNote = hmMode.getSelected() == 0;
     hmMode.setVisible (hm); hmNote.setVisible (hm && hmByNote); hmFreq.setVisible (hm && ! hmByNote); hmTable.setVisible (hm);
+    hmSet.setVisible (hm); hmWave.setVisible (hm); hmCount.setVisible (hm);
 }
 
 void PitchModule::refresh()
@@ -232,18 +256,37 @@ void PitchModule::refreshHarmonics (Validator& v)
     else if (auto f = v.num (hmFreq, "Fundamental", 1, 20000))
         f0 = *f;
 
+    const int wave = hmWave.getSelected(); // 0 = off
+    if (wave > 0)
+        hmTable.setColumns ({ "#", "TYPE", "FREQ Hz", "NOTE", "CENTS", "NOTE Hz", "LEVEL dB" },
+                            { 0.45f, 0.7f, 1.15f, 0.75f, 0.95f, 1.15f, 1.0f });
+    else
+        hmTable.setColumns ({ "#", "TYPE", "FREQ Hz", "NOTE", "CENTS", "NOTE Hz" },
+                            { 0.45f, 0.7f, 1.2f, 0.8f, 1.0f, 1.2f });
+
     if (! v.ok())
     {
         hmTable.setRows ({});
         return;
     }
+    static const calc::HarmonicSet sets[] = { calc::HarmonicSet::All, calc::HarmonicSet::Odd, calc::HarmonicSet::Even };
+    static const int counts[] = { 16, 32, 64 };
     std::vector<juce::StringArray> rows;
-    const auto hs = calc::harmonics (f0, 16);
+    const auto hs = calc::harmonics (f0, counts[juce::jlimit (0, 2, hmCount.getSelected())], sets[juce::jlimit (0, 2, hmSet.getSelected())]);
     for (auto& h : hs)
-        rows.push_back ({ juce::String (h.n), str (calc::fmtHz (h.freq)), noteStr (h.note.nearestMidi),
-                          str (calc::fmtCents (h.note.cents)), str (calc::fmtHz (h.note.nearestFreq)) });
+    {
+        juce::StringArray row { juce::String (h.n), h.n == 1 ? "FUND" : h.n % 2 == 1 ? "ODD" : "EVEN",
+                                str (calc::fmtHz (h.freq)), noteStr (h.note.nearestMidi),
+                                str (calc::fmtCents (h.note.cents)), str (calc::fmtHz (h.note.nearestFreq)) };
+        if (wave > 0)
+        {
+            const double level = calc::harmonicLevel ((calc::Waveform) (wave - 1), h.n);
+            row.add (level > 0 ? str (calc::fmt (calc::gainToDb (level), 1)) : juce::String ("--"));
+        }
+        rows.push_back (row);
+    }
     hmTable.setRows (rows);
-    hmTable.setRecommendedRow (0);
+    hmTable.setRecommendedRow (! hs.empty() && hs.front().n == 1 ? 0 : -1);
     for (int i = 0; i < (int) hs.size(); ++i)
         if (std::abs (hs[(size_t) i].note.cents) >= calc::kMicrotoneThresholdCents)
             hmTable.setRowColour (i, col::ledRed.withAlpha (0.85f));
@@ -265,6 +308,13 @@ void PitchModule::paint (juce::Graphics& g)
         g.drawFittedText ("NEW BPM = top bar BPM" + juce::String (ctx.isChained() ? " (chained)" : " for this module")
                               + ". Speed change = pitch change (varispeed).",
                           hint, juce::Justification::topLeft, 3);
+    }
+    else if (tab == 3)
+    {
+        g.setFont (labelFont (10.5f));
+        g.setColour (col::silkscreen.withAlpha (0.85f));
+        for (auto [group, caption] : { std::pair { &hmSet, "SERIES" }, std::pair { &hmWave, "WAVEFORM LEVELS" }, std::pair { &hmCount, "COUNT" } })
+            g.drawText (caption, group->getBounds().translated (0, -16).withHeight (15), juce::Justification::centredLeft);
     }
 }
 
@@ -311,6 +361,9 @@ void PitchModule::layoutContent (juce::Rectangle<int> r)
             auto noteRow = row (52);
             hmNote.setBounds (noteRow);
             hmFreq.setBounds (noteRow);
+            hmSet.setBounds (row (48).withTrimmedTop (16));   // captions drawn in paint()
+            hmWave.setBounds (row (48).withTrimmedTop (16));
+            hmCount.setBounds (row (48).withTrimmedTop (16));
             hmTable.setBounds (out);
             break;
         }

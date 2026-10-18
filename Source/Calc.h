@@ -87,7 +87,17 @@ StretchResult stretch (double oldBpm, double oldHz, double newBpm,
                        double thresholdCents = kMicrotoneThresholdCents);
 
 struct Harmonic { int n; double freq; NoteInfo note; };
-std::vector<Harmonic> harmonics (double fundamentalHz, int count, double maxHz = 22000.0);
+enum class HarmonicSet { All, Odd, Even };
+/** The first `count` harmonics of the chosen set (n = 1 is the fundamental), stopping at maxHz. */
+std::vector<Harmonic> harmonics (double fundamentalHz, int count, HarmonicSet set = HarmonicSet::All,
+                                 double maxHz = 22000.0);
+
+enum class Waveform { Saw, Square, Triangle };
+/** Ideal amplitude of harmonic n relative to the fundamental: saw 1/n (all), square 1/n (odd),
+    triangle 1/n^2 (odd). 0 when the waveform has no such harmonic. */
+double harmonicLevel (Waveform w, int n);
+/** The harmonic set a waveform contains. */
+HarmonicSet harmonicSetFor (Waveform w);
 
 //==============================================================================
 // Reverb

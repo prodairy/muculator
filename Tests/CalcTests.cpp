@@ -102,6 +102,26 @@ int main()
         near ("H3 cents ~ +1.96", h[2].note.cents, 1.955, 1e-3);
         near ("H7 cents ~ -31.2", h[6].note.cents, -31.174, 1e-3);
         truth ("capped at 22k", harmonics (5000, 16).size() == 4);
+
+        auto odd = harmonics (110, 16, HarmonicSet::Odd);
+        truth ("16 odd harmonics", odd.size() == 16);
+        truth ("odd: 1, 3, 5", odd[0].n == 1 && odd[1].n == 3 && odd[2].n == 5);
+        truth ("odd: last is 31", odd.back().n == 31);
+        auto even = harmonics (110, 16, HarmonicSet::Even);
+        truth ("even: 2, 4 .. 32", even[0].n == 2 && even[1].n == 4 && even.back().n == 32);
+        near ("even H2 freq", even[0].freq, 220);
+        truth ("64 harmonics", harmonics (110, 64).size() == 64);
+        truth ("odd capped at 22k", harmonics (5000, 16, HarmonicSet::Odd).size() == 2); // 5k, 15k (25k is cut)
+
+        near ("saw H3", harmonicLevel (Waveform::Saw, 3), 1.0 / 3.0);
+        near ("saw H2", harmonicLevel (Waveform::Saw, 2), 0.5);
+        near ("square H3", harmonicLevel (Waveform::Square, 3), 1.0 / 3.0);
+        near ("square H2 absent", harmonicLevel (Waveform::Square, 2), 0.0);
+        near ("triangle H3", harmonicLevel (Waveform::Triangle, 3), 1.0 / 9.0);
+        near ("triangle H4 absent", harmonicLevel (Waveform::Triangle, 4), 0.0);
+        near ("fundamental = 1", harmonicLevel (Waveform::Triangle, 1), 1.0);
+        truth ("square is odd", harmonicSetFor (Waveform::Square) == HarmonicSet::Odd);
+        truth ("saw is all", harmonicSetFor (Waveform::Saw) == HarmonicSet::All);
     }
 
     // --- reverb
