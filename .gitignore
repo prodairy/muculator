@@ -1,0 +1,8 @@
+build/
+cmake-build-*/
+shots/
+.DS_Store
+*.user
+.vs/
+.vscode/
+.idea/
