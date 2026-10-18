@@ -105,6 +105,11 @@ int main (int argc, char** argv)
     proc.state.setProperty ("loadCount", (int) proc.state.getProperty ("loadCount", 0) + 1, nullptr);
     save (*ed, dir, "4h_harmonics_square_flats_432");
 
+    // HOST SYNC on while the host is not running the plugin (no audio blocks here) -> footer hint
+    proc.state.setProperty ("hostSync", true, nullptr);
+    save (*ed, dir, "8_host_paused");
+    proc.state.setProperty ("hostSync", false, nullptr);
+
     // state round-trip
     juce::MemoryBlock mb;
     proc.getStateInformation (mb);

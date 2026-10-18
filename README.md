@@ -72,6 +72,10 @@ Muculator gives you the new note and frequency. If the result lands **between tw
 >
 > **Windows:** SmartScreen may warn about an unknown publisher; the plugin is unsigned.
 
+> **Host Sync in Logic:** Logic pauses plugins on tracks that are not playing, and Muculator can only read the tempo while it runs.
+> Put Muculator on the **Stereo Out** so Host Sync follows the tempo at all times, even when stopped. It does not touch the audio and uses no DSP, so this costs nothing.
+> Other hosts that pause silent tracks work the same way on the master channel.
+
 ## Build from source
 
 You need CMake ≥ 3.22 and a C++20 compiler (Xcode / Command Line Tools on macOS, Visual Studio 2022 or newer on Windows).
@@ -136,3 +140,5 @@ VST is a registered trademark of Steinberg Media Technologies GmbH.
 **Stretch:** Eski BPM'i, eski notayı ve yeni BPM'i girersin; yeni notayı ve frekansı verir. Sonuç iki notanın arasında kalırsa **MİKROTON UYARISI** gösterir ve notaya tam oturması için hangi BPM'i kullanman gerektiğini yazar.
 
 **Kurulum:** [Releases](../../releases/latest) sayfasından kendi sistemine uygun zip dosyasını indir, eklentiyi yukarıdaki klasöre kopyala ve DAW'da eklentileri yeniden tarat.
+
+**Logic'te Host Sync:** Logic, çalmayan kanallardaki eklentileri durdurur; Muculator tempoyu yalnızca çalışırken okuyabilir. Host Sync'in her zaman, durdurulmuşken bile çalışması için Muculator'ı **Stereo Out** kanalına koy. Sese dokunmadığı ve işlemci harcamadığı için bunun bir zararı yok.

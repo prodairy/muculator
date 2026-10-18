@@ -210,6 +210,8 @@ class HelpPanel final : public juce::Component
 public:
     HelpPanel();
     void setContent (const juce::String& title, const juce::String& text);
+    /** One line at the bottom, the same for every module. */
+    void setFooter (const juce::String& text) { footer = text; repaint(); }
     std::function<void()> onClose;
 
     void paint (juce::Graphics&) override;
@@ -218,7 +220,7 @@ public:
     void mouseDown (const juce::MouseEvent&) override {} // keeps clicks away from the module underneath
 
 private:
-    juce::String title;
+    juce::String title, footer;
     juce::StringArray columns;
     IllumButton closeButton { "CLOSE", col::capWhite, false };
 };

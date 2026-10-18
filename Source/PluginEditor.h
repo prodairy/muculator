@@ -40,8 +40,8 @@ private:
     void updateTopBar();
     /** Copies the host tempo into the visible module's BPM when HOST SYNC is on. */
     void applyHostTempo (bool force);
-    /** The host reported a tempo before but has stopped calling the plugin. */
-    bool hostIdle() const;
+    /** The host has not called processBlock for a second (paused track, or never started). */
+    bool hostPaused() const;
     const juce::String& currentId() const;
 
     MuculatorProcessor& proc;
@@ -60,7 +60,9 @@ private:
     int current = 0;
     std::vector<double> tapTimes;
     double lastHostBpm = -1;
-    bool wasIdle = false;
+    bool wasPaused = false;
+    /** Logic pauses plugins on tracks that are not playing; the hints name the fix for it. */
+    const bool inLogic = juce::PluginHostType().isLogic();
     double lastSampleRate = 0;
     juce::Rectangle<int> topBar, logoArea, hostArea, moduleStrip, contentArea, footer;
 

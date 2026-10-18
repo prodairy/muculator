@@ -46,7 +46,7 @@ auval -v aufx Mclc Mucu                                   # AU validation (macOS
 - Stretch is **varispeed**: pitch ratio = new BPM / old BPM. Microtone warning when the **displayed** deviation (rounded to 0.1 ct) is ≥ `kMicrotoneThresholdCents` (10). The warning names both neighbour notes, the cents off each, and the BPM needed to land on each.
 - BPM is valid from 1 to 999. Number parsing accepts a comma as the decimal separator. Invalid input must never crash: mark the field red (`LedField::setInvalid`), show the error through `showErrors`, and display `--`.
 - CHAIN on: one shared `globalBpm`. CHAIN off: each module keeps its own `bpm` child property, and the top-bar BPM edits the visible module. HOST SYNC locks the BPM field and is applied again when the visible module changes; TAP turns sync off.
-- The host may stop calling `processBlock` (e.g. silent tracks). After 1 s without a block the HOST TEMPO readout shows IDLE and the footer shows a hint.
+- The host may stop calling `processBlock` (e.g. silent tracks). After 1 s without a block the HOST TEMPO readout shows IDLE and, with HOST SYNC on, the footer shows a hint. Logic (detected with `juce::PluginHostType().isLogic()`) pauses every track that is not playing, so its hint says to put Muculator on the Stereo Out; naming Logic in that hint was approved by the owner. Reading the tempo outside `processBlock` is not supported, so this cannot be fixed in code.
 - Sample-rate fields (Converter, Loop) follow the host while their HOST SR button is lit; typing a rate turns it off.
 - Only one module is visible at a time. Fixed window size of 1000×680.
 - Reverb pre-delay is snapped to a 1/64 to 1/512 note and is at most 25 % of the total. Room size uses Sabine with 1.59 : 1.26 : 1 proportions.

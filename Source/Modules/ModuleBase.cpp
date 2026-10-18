@@ -7,6 +7,8 @@ ModuleBase::ModuleBase (const juce::String& i, const juce::String& t, ModuleCont
     addAndMakeVisible (helpButton);
     addChildComponent (help);
     helpButton.setTooltip ("How to use this module");
+    help.setFooter ("HOST SYNC reads the tempo only while the host runs the plugin. Some hosts pause plugins on tracks "
+                    "that are not playing. In Logic, put Muculator on the Stereo Out; elsewhere, on the master channel.");
     helpButton.onClick = [this] { showHelp (helpButton.getToggleState()); };
     help.onClose = [this] { showHelp (false); };
 }

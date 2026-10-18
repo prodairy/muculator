@@ -710,6 +710,17 @@ void HelpPanel::paint (juce::Graphics& g)
     g.drawText ("HOW TO USE:  " + title.toUpperCase(), top, juce::Justification::centredLeft);
     area.removeFromTop (10);
 
+    if (footer.isNotEmpty())
+    {
+        auto foot = area.removeFromBottom (36);
+        g.setColour (col::silkDim.withAlpha (0.3f));
+        g.fillRect (foot.removeFromTop (1));
+        g.setColour (col::silkDim);
+        g.setFont (labelFont (12.0f, false));
+        g.drawFittedText (footer, foot.withTrimmedTop (5), juce::Justification::topLeft, 2, 1.0f);
+        area.removeFromBottom (6);
+    }
+
     const int n = juce::jmax (1, columns.size());
     const int gap = 30;
     const int colW = (area.getWidth() - gap * (n - 1)) / n;

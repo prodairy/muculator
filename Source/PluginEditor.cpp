@@ -42,7 +42,10 @@ MuculatorEditor::MuculatorEditor (MuculatorProcessor& p)
     chainButton.setToggleState ((bool) state[chainId], juce::dontSendNotification);
     chainButton.onClick = [this] { setChained (chainButton.getToggleState()); };
     hostSync.setToggleState ((bool) state[hostSyncId], juce::dontSendNotification);
-    hostSync.setTooltip ("Follow the host (DAW) tempo");
+    hostSync.setTooltip (inLogic ? "Follow the Logic tempo. Logic pauses plugins on tracks that are not playing: "
+                                   "put Muculator on the Stereo Out to follow the tempo at all times."
+                                 : "Follow the host (DAW) tempo. Some hosts pause plugins on silent tracks: "
+                                   "put Muculator on the master channel to follow the tempo at all times.");
     hostSync.onClick = [this]
     {
         state.setProperty (hostSyncId, hostSync.getToggleState(), nullptr);
@@ -242,9 +245,9 @@ void MuculatorEditor::applyHostTempo (bool force)
         setBpmTextFor (currentId(), bpmToText (host));
 }
 
-bool MuculatorEditor::hostIdle() const
+bool MuculatorEditor::hostPaused() const
 {
-    return proc.getHostBpm() > 0 && proc.msSinceLastBlock() > 1000;
+    return proc.msSinceLastBlock() > 1000;
 }
 
 void MuculatorEditor::timerCallback()
@@ -258,9 +261,9 @@ void MuculatorEditor::timerCallback()
             m->refresh();
     }
     repaint (hostArea);
-    if (const bool idle = hostIdle(); idle != wasIdle)
+    if (const bool paused = hostPaused(); paused != wasPaused)
     {
-        wasIdle = idle;
+        wasPaused = paused;
         repaint (footer);
     }
 }
@@ -322,7 +325,8 @@ void MuculatorEditor::paint (juce::Graphics& g)
     drawScreen (g, h.toFloat());
     const double host = proc.getHostBpm();
     const bool synced = (bool) state[hostSyncId];
-    const bool idle = hostIdle();
+    const bool paused = hostPaused();
+    const bool idle = paused && host > 0; // a tempo arrived before, but the host stopped running the plugin
     auto ledArea = h.removeFromLeft (20).toFloat();
     drawLed (g, ledArea.withSizeKeepingCentre (8, 8).translated (4, 0), col::ledGreen, synced && host > 0 && ! idle);
     if (idle)
@@ -342,12 +346,15 @@ void MuculatorEditor::paint (juce::Graphics& g)
     g.drawText ("MODULE", moduleStrip.withWidth (60), juce::Justification::centredLeft);
 
     // footer
-    if (synced && idle)
+    if (synced && paused)
     {
+        // Also shown when no tempo ever arrived: in Logic a silent track never runs the plugin at all.
         g.setColour (col::ledAmber);
         g.setFont (labelFont (10.5f));
-        g.drawText ("HOST IDLE: some hosts pause plugins on silent tracks. Select or record-arm this track, "
-                    "or press Play on a track that has a region.",
+        g.drawText (inLogic ? "HOST IDLE: Logic pauses plugins on tracks that are not playing. "
+                              "Put Muculator on the Stereo Out to follow the tempo at all times."
+                            : "HOST IDLE: some hosts pause plugins on silent tracks. Put Muculator on the master channel, "
+                              "or select / arm this track.",
                     footer, juce::Justification::centredLeft);
         return;
     }
