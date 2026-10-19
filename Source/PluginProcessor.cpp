@@ -1,10 +1,18 @@
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
 
-MuculatorProcessor::MuculatorProcessor()
-    : AudioProcessor (BusesProperties()
-                          .withInput ("Input", juce::AudioChannelSet::stereo(), true)
-                          .withOutput ("Output", juce::AudioChannelSet::stereo(), true))
+juce::AudioProcessor::BusesProperties MuculatorProcessor::buses (bool isStandaloneApp)
+{
+    // The standalone app has nothing to pass through: without an input it never opens the
+    // microphone and shows no feedback warning.
+    auto b = BusesProperties();
+    if (! isStandaloneApp)
+        b = b.withInput ("Input", juce::AudioChannelSet::stereo(), true);
+    return b.withOutput ("Output", juce::AudioChannelSet::stereo(), true);
+}
+
+MuculatorProcessor::MuculatorProcessor (bool isStandaloneApp)
+    : AudioProcessor (buses (isStandaloneApp)), standalone (isStandaloneApp)
 {
 }
 
@@ -19,7 +27,8 @@ bool MuculatorProcessor::isBusesLayoutSupported (const BusesLayout& layouts) con
     const auto out = layouts.getMainOutputChannelSet();
     if (out != juce::AudioChannelSet::mono() && out != juce::AudioChannelSet::stereo())
         return false;
-    return layouts.getMainInputChannelSet() == out;
+    const auto in = layouts.getMainInputChannelSet();
+    return in == out || (standalone && in.isDisabled());
 }
 
 template <typename Sample>
@@ -43,7 +52,10 @@ juce::AudioProcessorEditor* MuculatorProcessor::createEditor() { return new Mucu
 
 void MuculatorProcessor::getStateInformation (juce::MemoryBlock& destData)
 {
-    if (auto xml = state.createXml())
+    // loadCount only signals an open editor; saving it would make every save differ from the last.
+    auto saved = state.createCopy();
+    saved.removeProperty ("loadCount", nullptr);
+    if (auto xml = saved.createXml())
         copyXmlToBinary (*xml, destData);
 }
 

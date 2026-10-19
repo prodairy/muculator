@@ -24,7 +24,7 @@ MuculatorEditor::MuculatorEditor (MuculatorProcessor& p)
 
     if (! state.hasProperty (globalBpmId)) state.setProperty (globalBpmId, "120", nullptr);
     if (! state.hasProperty (chainId))     state.setProperty (chainId, true, nullptr);
-    if (! state.hasProperty (hostSyncId))  state.setProperty (hostSyncId, false, nullptr);
+    if (! state.hasProperty (hostSyncId) || ! hasHost()) state.setProperty (hostSyncId, false, nullptr);
 
     bpmField.setFontHeight (30.0f);
     bpmField.setCaption ("Tempo  BPM");
@@ -59,6 +59,7 @@ MuculatorEditor::MuculatorEditor (MuculatorProcessor& p)
 
     for (auto* c : std::initializer_list<juce::Component*> { &bpmField, &minus, &plus, &tapButton, &chainButton, &hostSync, &skinButton, &moduleButtons })
         addAndMakeVisible (c);
+    hostSync.setVisible (hasHost()); // the standalone app has no host tempo to follow
 
     moduleButtons.onSelect = [this] (int i) { selectModule (i); };
 
@@ -409,25 +410,34 @@ void MuculatorEditor::paint (juce::Graphics& g)
     auto h = hostArea;
     g.setFont (labelFont (10.5f));
     g.setColour (skin().text.withAlpha (0.85f));
-    g.drawText ("HOST TEMPO", h.removeFromTop (15), juce::Justification::centredLeft);
+    g.drawText (hasHost() ? "HOST TEMPO" : "MODE", h.removeFromTop (15), juce::Justification::centredLeft);
     h.removeFromTop (1);
     drawScreen (g, h.toFloat());
     const double host = proc.getHostBpm();
     const bool synced = (bool) state[hostSyncId];
     const bool paused = hostPaused();
     const bool idle = paused && host > 0; // a tempo arrived before, but the host stopped running the plugin
-    auto ledArea = h.removeFromLeft (20).toFloat();
-    drawLed (g, ledArea.withSizeKeepingCentre (8, 8).translated (4, 0), skin().ledGreen, synced && host > 0 && ! idle);
-    if (idle)
+    if (! hasHost())
     {
-        // Last tempo stays visible but dimmed; the host is not running the plugin right now.
-        g.setFont (ledFont (11.0f));
-        g.setColour (skin().ledAmber);
-        g.drawText ("IDLE", h.removeFromRight (40).withTrimmedRight (6), juce::Justification::centredRight);
+        g.setFont (ledFont (15.0f));
+        g.setColour (skin().screenText);
+        g.drawText ("STANDALONE", h.reduced (6, 0), juce::Justification::centred);
     }
-    g.setFont (ledFont (17.0f));
-    g.setColour (host <= 0 ? skin().screenText : idle ? skin().ledGreen.withAlpha (0.35f) : skin().ledGreen);
-    g.drawText (host > 0 ? juce::String (host, 2) : juce::String ("-- no host --"), h.reduced (6, 0), juce::Justification::centred);
+    else
+    {
+        auto ledArea = h.removeFromLeft (20).toFloat();
+        drawLed (g, ledArea.withSizeKeepingCentre (8, 8).translated (4, 0), skin().ledGreen, synced && host > 0 && ! idle);
+        if (idle)
+        {
+            // Last tempo stays visible but dimmed; the host is not running the plugin right now.
+            g.setFont (ledFont (11.0f));
+            g.setColour (skin().ledAmber);
+            g.drawText ("IDLE", h.removeFromRight (40).withTrimmedRight (6), juce::Justification::centredRight);
+        }
+        g.setFont (ledFont (17.0f));
+        g.setColour (host <= 0 ? skin().screenText : idle ? skin().ledGreen.withAlpha (0.35f) : skin().ledGreen);
+        g.drawText (host > 0 ? juce::String (host, 2) : juce::String ("-- no host --"), h.reduced (6, 0), juce::Justification::centred);
+    }
 
     // module strip label
     g.setColour (skin().textDim);
@@ -452,7 +462,7 @@ void MuculatorEditor::paint (juce::Graphics& g)
     g.setColour (skin().textDim);
     g.setFont (labelFont (10.0f, false));
     g.drawText ("A4 = " + (a4.ok() ? juce::String (*a4.value, 2).trimCharactersAtEnd ("0").trimCharactersAtEnd (".") : juce::String ("--"))
-                    + " Hz  |  C4 = MIDI 60  |  audio passes through untouched",
+                    + " Hz  |  C4 = MIDI 60  |  " + (hasHost() ? "audio passes through untouched" : "standalone app, no audio"),
                 footer, juce::Justification::centredLeft);
     g.drawText (isChained() ? "CHAIN ON: one BPM for every module" : "CHAIN OFF: each module keeps its own BPM",
                 footer, juce::Justification::centredRight);
@@ -469,8 +479,11 @@ void MuculatorEditor::resized()
 
     hostArea = t.removeFromRight (150);
     t.removeFromRight (12);
-    hostSync.setBounds (t.removeFromRight (86).withTrimmedTop (14));
-    t.removeFromRight (12);
+    if (hasHost())
+    {
+        hostSync.setBounds (t.removeFromRight (86).withTrimmedTop (14));
+        t.removeFromRight (12);
+    }
     chainButton.setBounds (t.removeFromRight (72).withTrimmedTop (14));
     t.removeFromRight (12);
     tapButton.setBounds (t.removeFromRight (72).withTrimmedTop (14));

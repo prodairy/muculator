@@ -12,6 +12,8 @@ struct ModuleContext
     virtual void setBpmTextFor (const juce::String& moduleId, const juce::String& text) = 0;
     virtual bool isChained() const = 0;
     virtual double hostSampleRate() const = 0;
+    /** False in the standalone app: no host tempo, and HOST SR buttons are hidden. */
+    virtual bool hasHost() const = 0;
     virtual juce::ValueTree moduleState (const juce::String& moduleId) = 0;
 };
 
@@ -43,6 +45,8 @@ protected:
     void updateHelp();
 
     calc::Parsed bpm() const { return ctx.bpmFor (id); }
+    /** Help text step for setting the tempo; HOST SYNC exists only inside a host. */
+    juce::String tempoStep() const;
     juce::ValueTree state() { return ctx.moduleState (id); }
 
     /** Shows validation errors in the module's warning strip (empty = clear). */

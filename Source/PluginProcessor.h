@@ -7,7 +7,9 @@
 class MuculatorProcessor final : public juce::AudioProcessor
 {
 public:
-    MuculatorProcessor();
+    /** standalone: running as its own app, with no host. Defaults to how JUCE loaded the plugin. */
+    explicit MuculatorProcessor (bool standalone = juce::PluginHostType::getPluginLoadedAs()
+                                                       == juce::AudioProcessor::wrapperType_Standalone);
     ~MuculatorProcessor() override = default;
 
     void prepareToPlay (double sampleRate, int samplesPerBlock) override;
@@ -35,6 +37,9 @@ public:
     void getStateInformation (juce::MemoryBlock& destData) override;
     void setStateInformation (const void* data, int sizeInBytes) override;
 
+    /** The standalone app: no host tempo, and the sample rate is only the audio device's. */
+    bool isStandalone() const noexcept { return standalone; }
+
     /** 0 when the host has not reported a tempo. */
     double getHostBpm() const noexcept { return hostBpm.load(); }
     double getCurrentSampleRate() const noexcept { return currentSampleRate.load(); }
@@ -44,8 +49,10 @@ public:
     juce::ValueTree state { "MUCULATOR" };
 
 private:
+    static BusesProperties buses (bool isStandaloneApp);
     template <typename Sample> void readHost (juce::AudioBuffer<Sample>&);
 
+    const bool standalone;
     std::atomic<double> hostBpm { 0.0 };
     std::atomic<double> currentSampleRate { 48000.0 };
     std::atomic<juce::uint32> lastBlockMs { juce::Time::getMillisecondCounter() - 0x7fffffffu };

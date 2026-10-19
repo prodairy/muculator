@@ -14,3 +14,5 @@ Third-party components:
 - JUCE (https://juce.com), used under the GNU AGPLv3.
 - Steinberg VST3 SDK, MIT License. VST is a registered trademark of
   Steinberg Media Technologies GmbH.
+- clap-juce-extensions (https://github.com/free-audio/clap-juce-extensions),
+  MIT License, with the CLAP SDK and clap-helpers (MIT License).

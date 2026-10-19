@@ -7,8 +7,10 @@ ModuleBase::ModuleBase (const juce::String& i, const juce::String& t, ModuleCont
     addAndMakeVisible (helpButton);
     addChildComponent (help);
     helpButton.setTooltip ("How to use this module");
-    help.setFooter ("HOST SYNC reads the tempo only while the host runs the plugin. Some hosts pause plugins on tracks "
-                    "that are not playing. In Logic, put Muculator on the Stereo Out; elsewhere, on the master channel.");
+    help.setFooter (ctx.hasHost() ? "HOST SYNC reads the tempo only while the host runs the plugin. Some hosts pause plugins on tracks "
+                                    "that are not playing. In Logic, put Muculator on the Stereo Out; elsewhere, on the master channel."
+                                  : "Standalone app: there is no DAW, so set the tempo by typing, dragging, - / + or TAP, "
+                                    "and type the sample rate. Load Muculator as a plugin to follow the DAW.");
     helpButton.onClick = [this] { showHelp (helpButton.getToggleState()); };
     help.onClose = [this] { showHelp (false); };
 }
@@ -26,6 +28,12 @@ void ModuleBase::showHelp (bool shouldShow)
     {
         help.setVisible (false);
     }
+}
+
+juce::String ModuleBase::tempoStep() const
+{
+    return ctx.hasHost() ? "Set the tempo in the top bar, or turn on HOST SYNC."
+                         : "Set the tempo in the top bar: type it, drag it, or TAP it.";
 }
 
 void ModuleBase::updateHelp()
