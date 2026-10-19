@@ -54,6 +54,25 @@ private:
 };
 
 //==============================================================================
+/** Instrument frequency ranges on a log axis (20 Hz to 20 kHz) with an optional marker line. */
+class FrequencyMap final : public juce::Component, public juce::SettableTooltipClient
+{
+public:
+    /** Hz of the marker line; 0 hides it. */
+    void setMarker (double hz) { marker = hz; repaint(); }
+    /** Called with the frequency under a click. */
+    std::function<void (double)> onClick;
+    void paint (juce::Graphics&) override;
+    void mouseDown (const juce::MouseEvent&) override;
+
+private:
+    double marker = 0;
+    juce::Rectangle<float> plotArea() const;
+    float hzToX (double hz) const;
+    double xToHz (float x) const;
+};
+
+//==============================================================================
 class PitchModule final : public ModuleBase
 {
 public:
@@ -69,6 +88,10 @@ private:
     void refreshStretch (Validator&);
     void refreshFreq (Validator&);
     void refreshHarmonics (Validator&);
+    void refreshMap (Validator&);
+    void refreshTimeStretch (Validator&, double oldBpm, double newBpm);
+    void refreshFit (double oldBpm, double oldHz, double newBpm);
+    bool timeStretchMode() const { return stKind.getSelected() == 1; }
     void updateVisibility();
     juce::String noteText (int midi) const;
     juce::String noteWithCents (const calc::NoteInfo&) const;
@@ -83,7 +106,10 @@ private:
     ui::LedReadout tpOut;
 
     // stretch
-    ui::ButtonGroup stMode;
+    ui::ButtonGroup stKind, stMode, stScale;
+    ui::LedField stLength { "Old length", "s" };
+    juce::ComboBox stKey;
+    ui::LedTable stFit;
     ui::NotePicker stNote { "Old note" };
     ui::LedField stFreq { "Old frequency", "Hz" };
     ui::LedField stOldBpm { "Old BPM" }, stNewBpm { "New BPM" };
@@ -100,6 +126,13 @@ private:
     ui::LedField hmFreq { "Fundamental", "Hz" };
     ui::LedTable hmTable;
 
+    // frequency map
+    ui::ButtonGroup fmMode;
+    ui::NotePicker fmNote { "Marker note" };
+    ui::LedField fmFreq { "Marker frequency", "Hz" };
+    ui::LedReadout fmOut;
+    FrequencyMap fmMap;
+
     // tuning (shared by every tab)
     ui::LedField a4Field { "A4 reference", "Hz" };
     ui::IllumButton a4Presets { "...", ui::Cap::White, false };
@@ -107,7 +140,7 @@ private:
     double a4 = calc::kA4Hz;
     bool flats = false;
 
-    juce::Rectangle<int> inputArea, outputArea;
+    juce::Rectangle<int> inputArea, outputArea, fitArea;
 };
 
 //==============================================================================
