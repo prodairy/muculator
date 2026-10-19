@@ -11,7 +11,7 @@ static juce::StringArray sourceNames()
 
 CompressorModule::CompressorModule (ModuleContext& c)
     : ModuleBase ("comp", "Compressor Attack / Release", c),
-      sources (sourceNames(), col::capOrange, 201, false)
+      sources (sourceNames(), Cap::Orange, 201, false)
 {
     sources.setColumns (4);
     addAndMakeVisible (sources);
@@ -37,9 +37,9 @@ void CompressorModule::refresh()
         showErrors ({ str (b.error) });
         releaseTable.setRows ({});
         result.setLines ({
-            { "SOURCE", src.name, col::ledGreen },
-            { "ATTACK (source)", str (calc::fmt (src.attackRecMs, 0)) + " ms", col::ledAmber, 1.3f },
-            { "RELEASE (BPM)", "--", col::ledRed, 1.3f },
+            { "SOURCE", src.name, skin().ledGreen },
+            { "ATTACK (source)", str (calc::fmt (src.attackRecMs, 0)) + " ms", skin().ledAmber, 1.3f },
+            { "RELEASE (BPM)", "--", skin().ledRed, 1.3f },
         });
         advice.clear();
         return;
@@ -49,12 +49,12 @@ void CompressorModule::refresh()
     const double relMs = calc::noteMs (v, src.releaseDenominator, src.releaseKind);
 
     result.setLines ({
-        { "SOURCE", src.name, col::ledGreen },
-        { "ATTACK (source)", str (calc::fmt (src.attackRecMs, 0)) + " ms", col::ledAmber, 1.3f },
-        { "  range", str (calc::fmt (src.attackMinMs, 0)) + " - " + str (calc::fmt (src.attackMaxMs, 0)) + " ms", col::ledAmber.withAlpha (0.7f) },
+        { "SOURCE", src.name, skin().ledGreen },
+        { "ATTACK (source)", str (calc::fmt (src.attackRecMs, 0)) + " ms", skin().ledAmber, 1.3f },
+        { "  range", str (calc::fmt (src.attackMinMs, 0)) + " - " + str (calc::fmt (src.attackMaxMs, 0)) + " ms", skin().ledAmber.withAlpha (0.7f) },
         { "RELEASE (BPM)", str (calc::noteValueLabel (src.releaseDenominator, src.releaseKind)) + " = "
-                               + str (calc::fmtMs (relMs)) + " ms", col::ledAmber, 1.3f },
-        { "", src.hint, col::silkDim },
+                               + str (calc::fmtMs (relMs)) + " ms", skin().ledAmber, 1.3f },
+        { "", src.hint, skin().screenText },
     });
 
     std::vector<juce::StringArray> rows;
@@ -73,7 +73,7 @@ void CompressorModule::refresh()
     releaseTable.setRecommendedRow (rec);
     for (int i = 0; i < (int) dens.size(); ++i)
         if (calc::noteMs (v, dens[(size_t) i]) < src.attackMaxMs * 2.0)
-            releaseTable.setRowColour (i, col::ledRed.withAlpha (0.6f));
+            releaseTable.setRowColour (i, skin().ledRed.withAlpha (0.6f));
 
     if (relMs < src.attackMaxMs * 2.0)
         advice.setMessage ("RELEASE VERY SHORT", "At " + str (calc::fmt (v, 1)) + " BPM the suggested release ("

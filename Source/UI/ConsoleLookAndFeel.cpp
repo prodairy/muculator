@@ -4,51 +4,59 @@ namespace ui
 {
 juce::Font ledFont (float height, bool bold)
 {
-    return juce::Font (juce::FontOptions (juce::Font::getDefaultMonospacedFontName(), height,
+    const auto& name = skin().ledFont;
+    return juce::Font (juce::FontOptions (name.isNotEmpty() ? name : juce::Font::getDefaultMonospacedFontName(), height,
                                           bold ? juce::Font::bold : juce::Font::plain));
 }
 
 juce::Font labelFont (float height, bool bold)
 {
-    return juce::Font (juce::FontOptions (juce::Font::getDefaultSansSerifFontName(), height,
+    const auto& name = skin().labelFont;
+    return juce::Font (juce::FontOptions (name.isNotEmpty() ? name : juce::Font::getDefaultSansSerifFontName(), height,
                                           bold ? juce::Font::bold : juce::Font::plain));
 }
 
 juce::Rectangle<int> drawSection (juce::Graphics& g, juce::Rectangle<int> area, const juce::String& title)
 {
+    const auto& s = skin();
+    const float corner = s.sectionCorner, inner = juce::jmax (0.0f, corner - 1.0f);
     auto r = area.toFloat();
-    g.setColour (col::panelEdge);
-    g.fillRoundedRectangle (r, 5.0f);
-    g.setColour (col::recess);
-    g.fillRoundedRectangle (r.reduced (1.0f), 4.0f);
+    g.setColour (s.panelEdge);
+    g.fillRoundedRectangle (r, corner);
+    g.setColour (s.recess);
+    g.fillRoundedRectangle (r.reduced (1.0f), inner);
     g.setColour (juce::Colours::white.withAlpha (0.05f));
-    g.drawRoundedRectangle (r.reduced (1.5f), 4.0f, 1.0f);
+    g.drawRoundedRectangle (r.reduced (1.5f), inner, 1.0f);
 
-    auto inner = area.reduced (8);
+    auto content = area.reduced (8);
     if (title.isNotEmpty())
     {
-        auto strip = inner.removeFromTop (18);
-        g.setColour (col::silkscreen);
+        auto strip = content.removeFromTop (18);
+        g.setColour (s.text);
         g.setFont (labelFont (11.5f));
         g.drawText (title.toUpperCase(), strip, juce::Justification::centredLeft);
         const int tw = juce::GlyphArrangement::getStringWidthInt (g.getCurrentFont(), title.toUpperCase());
-        g.setColour (col::silkDim.withAlpha (0.5f));
+        g.setColour (s.textDim.withAlpha (0.5f));
         g.fillRect (strip.getX() + tw + 8, strip.getCentreY(), juce::jmax (0, strip.getWidth() - tw - 8), 1);
-        inner.removeFromTop (4);
+        content.removeFromTop (4);
     }
-    return inner;
+    return content;
 }
 
 void drawScreen (juce::Graphics& g, juce::Rectangle<float> r)
 {
-    g.setColour (juce::Colours::black);
-    g.fillRoundedRectangle (r, 3.0f);
-    g.setColour (col::screen);
-    g.fillRoundedRectangle (r.reduced (1.5f), 2.5f);
+    const auto& s = skin();
+    const float corner = s.screenCorner, inner = juce::jmax (0.0f, corner - 0.5f);
+    g.setColour (s.screenEdge);
+    g.fillRoundedRectangle (r, corner);
+    g.setColour (s.screen);
+    g.fillRoundedRectangle (r.reduced (1.5f), inner);
+    if (! s.screenGlare)
+        return;
     juce::ColourGradient glare (juce::Colours::white.withAlpha (0.045f), r.getX(), r.getY(),
                                 juce::Colours::transparentWhite, r.getX(), r.getCentreY(), false);
     g.setGradientFill (glare);
-    g.fillRoundedRectangle (r.reduced (1.5f), 2.5f);
+    g.fillRoundedRectangle (r.reduced (1.5f), inner);
     g.setColour (juce::Colours::white.withAlpha (0.08f));
     g.drawLine (r.getX() + 3, r.getBottom() - 0.5f, r.getRight() - 3, r.getBottom() - 0.5f, 1.0f);
 }
@@ -70,6 +78,8 @@ void drawLed (juce::Graphics& g, juce::Rectangle<float> r, juce::Colour c, bool 
 
 void drawScrew (juce::Graphics& g, juce::Point<float> c, float rad)
 {
+    if (! skin().screws)
+        return;
     juce::ColourGradient grad (juce::Colour (0xffb8b8b8), c.x - rad, c.y - rad,
                                juce::Colour (0xff4a4a4a), c.x + rad, c.y + rad, false);
     g.setGradientFill (grad);
@@ -79,74 +89,132 @@ void drawScrew (juce::Graphics& g, juce::Point<float> c, float rad)
 }
 
 //==============================================================================
-ConsoleLookAndFeel::ConsoleLookAndFeel()
+ConsoleLookAndFeel::ConsoleLookAndFeel() { applySkin(); }
+
+void ConsoleLookAndFeel::applySkin()
 {
-    setColour (juce::ResizableWindow::backgroundColourId, col::panel);
-    setColour (juce::PopupMenu::backgroundColourId, col::panelDark);
-    setColour (juce::PopupMenu::textColourId, col::silkscreen);
-    setColour (juce::PopupMenu::highlightedBackgroundColourId, col::ledAmber.withAlpha (0.85f));
-    setColour (juce::PopupMenu::highlightedTextColourId, juce::Colours::black);
-    setColour (juce::ComboBox::textColourId, col::ledAmber);
-    setColour (juce::ComboBox::arrowColourId, col::ledAmber);
-    setColour (juce::Label::textColourId, col::silkscreen);
-    setColour (juce::TextEditor::textColourId, col::ledAmber);
-    setColour (juce::TextEditor::highlightColourId, col::ledAmber.withAlpha (0.35f));
-    setColour (juce::TextEditor::highlightedTextColourId, juce::Colours::white);
-    setColour (juce::CaretComponent::caretColourId, col::ledAmber);
-    setColour (juce::TooltipWindow::backgroundColourId, col::panelDark);
-    setColour (juce::TooltipWindow::textColourId, col::silkscreen);
+    const auto& s = skin();
+    setColour (juce::ResizableWindow::backgroundColourId, s.panel);
+    setColour (juce::PopupMenu::backgroundColourId, s.panelDark);
+    setColour (juce::PopupMenu::textColourId, s.text);
+    setColour (juce::PopupMenu::headerTextColourId, s.textDim);
+    setColour (juce::PopupMenu::highlightedBackgroundColourId, s.capYellow.withAlpha (0.85f));
+    setColour (juce::PopupMenu::highlightedTextColourId, s.litText);
+    setColour (juce::ComboBox::textColourId, s.ledAmber);
+    setColour (juce::ComboBox::arrowColourId, s.ledAmber);
+    setColour (juce::Label::textColourId, s.text);
+    setColour (juce::TextEditor::textColourId, s.ledAmber);
+    setColour (juce::TextEditor::highlightColourId, s.ledAmber.withAlpha (0.35f));
+    setColour (juce::TextEditor::highlightedTextColourId, s.text);
+    setColour (juce::CaretComponent::caretColourId, s.ledAmber);
+    setColour (juce::TooltipWindow::backgroundColourId, s.panelDark);
+    setColour (juce::TooltipWindow::textColourId, s.text);
 }
 
 void ConsoleLookAndFeel::drawButtonBackground (juce::Graphics& g, juce::Button& b, const juce::Colour&,
-                                           bool highlighted, bool down)
+                                               bool highlighted, bool down)
 {
+    const auto& s = skin();
     auto r = b.getLocalBounds().toFloat().reduced (1.5f);
-    const auto cap = juce::Colour ((juce::uint32) (juce::int64) b.getProperties().getWithDefault ("cap", (juce::int64) col::capWhite.getARGB()));
+    const auto cap = s.cap ((Cap) (int) b.getProperties().getWithDefault ("cap", (int) Cap::White));
     const bool lit = b.getToggleState() || (bool) b.getProperties()["flash"];
-    const float corner = 3.5f;
-
-    // bezel
-    g.setColour (juce::Colours::black.withAlpha (0.7f));
-    g.fillRoundedRectangle (r.translated (0, 1.5f), corner);
-    g.setColour (col::panelEdge);
-    g.fillRoundedRectangle (r, corner);
-
+    const float corner = s.buttonCorner, faceCorner = juce::jmax (0.0f, corner - 1.0f);
     auto face = r.reduced (2.0f);
-    if (lit)
+
+    switch (s.buttonStyle)
     {
-        g.setColour (cap.withAlpha (0.28f));
-        g.fillRoundedRectangle (r.expanded (2.5f), corner + 2);
-        juce::ColourGradient grad (cap.brighter (0.45f), face.getCentreX(), face.getCentreY(),
-                                   cap.darker (0.15f), face.getX(), face.getY(), true);
-        g.setGradientFill (grad);
+        case Skin::ButtonStyle::Glow:
+        {
+            // bezel
+            g.setColour (juce::Colours::black.withAlpha (0.7f));
+            g.fillRoundedRectangle (r.translated (0, 1.5f), corner);
+            g.setColour (s.panelEdge);
+            g.fillRoundedRectangle (r, corner);
+
+            if (lit)
+            {
+                g.setColour (cap.withAlpha (0.28f));
+                g.fillRoundedRectangle (r.expanded (2.5f), corner + 2);
+                juce::ColourGradient grad (cap.brighter (0.45f), face.getCentreX(), face.getCentreY(),
+                                           cap.darker (0.15f), face.getX(), face.getY(), true);
+                g.setGradientFill (grad);
+            }
+            else
+            {
+                juce::ColourGradient grad (cap.darker (1.7f).withMultipliedSaturation (0.55f), face.getX(), face.getY(),
+                                           cap.darker (2.4f).withMultipliedSaturation (0.45f), face.getX(), face.getBottom(), false);
+                g.setGradientFill (grad);
+            }
+            g.fillRoundedRectangle (face, faceCorner);
+            break;
+        }
+        case Skin::ButtonStyle::Flat:
+        {
+            face = r;
+            g.setColour (lit ? cap : s.buttonFace);
+            g.fillRoundedRectangle (face, corner);
+            g.setColour (lit ? cap.darker (0.4f) : s.panelEdge);
+            g.drawRoundedRectangle (face.reduced (0.5f), corner, 1.0f);
+            break;
+        }
+        case Skin::ButtonStyle::Gloss:
+        case Skin::ButtonStyle::Glass:
+        {
+            const bool glass = s.buttonStyle == Skin::ButtonStyle::Glass;
+            const auto base = lit ? cap : s.buttonFace;
+            face = r.reduced (1.0f);
+            g.setColour (juce::Colours::black.withAlpha (0.45f));
+            g.fillRoundedRectangle (r.translated (0, 1.0f), corner);
+            if (lit)
+            {
+                g.setColour (cap.withAlpha (glass ? 0.22f : 0.3f));
+                g.fillRoundedRectangle (r.expanded (2.0f), corner + 2);
+            }
+            g.setColour (s.panelEdge);
+            g.fillRoundedRectangle (r, corner);
+            juce::ColourGradient grad (base.brighter (glass ? 0.12f : 0.3f), 0, face.getY(),
+                                       base.darker (glass ? 0.2f : 0.35f), 0, face.getBottom(), false);
+            g.setGradientFill (grad);
+            g.fillRoundedRectangle (face, faceCorner);
+
+            // sheen over the upper half
+            auto top = face.withHeight (face.getHeight() * (glass ? 0.5f : 0.46f)).reduced (glass ? 1.0f : 0.0f, 0.0f);
+            const float sheen = glass ? (lit ? 0.22f : 0.12f) : (lit ? 0.38f : 0.2f);
+            juce::ColourGradient gloss (juce::Colours::white.withAlpha (sheen), 0, top.getY(),
+                                        juce::Colours::white.withAlpha (glass ? 0.02f : sheen * 0.35f), 0, top.getBottom(), false);
+            g.setGradientFill (gloss);
+            g.fillRoundedRectangle (top, faceCorner);
+            if (glass)
+            {
+                g.setColour (juce::Colours::white.withAlpha (lit ? 0.35f : 0.16f));
+                g.drawRoundedRectangle (face.reduced (0.5f), faceCorner, 1.0f);
+            }
+            break;
+        }
     }
-    else
-    {
-        juce::ColourGradient grad (cap.darker (1.7f).withMultipliedSaturation (0.55f), face.getX(), face.getY(),
-                                   cap.darker (2.4f).withMultipliedSaturation (0.45f), face.getX(), face.getBottom(), false);
-        g.setGradientFill (grad);
-    }
-    g.fillRoundedRectangle (face, corner - 1);
 
     if (highlighted && ! down)
     {
-        g.setColour (juce::Colours::white.withAlpha (0.08f));
-        g.fillRoundedRectangle (face, corner - 1);
+        g.setColour (s.buttonText.withAlpha (0.08f));
+        g.fillRoundedRectangle (face, faceCorner);
     }
     if (down)
     {
         g.setColour (juce::Colours::black.withAlpha (0.18f));
-        g.fillRoundedRectangle (face, corner - 1);
+        g.fillRoundedRectangle (face, faceCorner);
     }
-    g.setColour (juce::Colours::white.withAlpha (lit ? 0.35f : 0.1f));
-    g.drawLine (face.getX() + 3, face.getY() + 1, face.getRight() - 3, face.getY() + 1, 1.0f);
+    if (s.buttonStyle == Skin::ButtonStyle::Glow)
+    {
+        g.setColour (juce::Colours::white.withAlpha (lit ? 0.35f : 0.1f));
+        g.drawLine (face.getX() + 3, face.getY() + 1, face.getRight() - 3, face.getY() + 1, 1.0f);
+    }
 }
 
 void ConsoleLookAndFeel::drawButtonText (juce::Graphics& g, juce::TextButton& b, bool, bool)
 {
     const bool lit = b.getToggleState() || (bool) b.getProperties()["flash"];
     g.setFont (getTextButtonFont (b, b.getHeight()));
-    g.setColour (lit ? juce::Colour (0xff141414) : col::silkscreen.withAlpha (b.isEnabled() ? 0.85f : 0.35f));
+    g.setColour (lit ? skin().litText : skin().buttonText.withAlpha (b.isEnabled() ? 0.85f : 0.35f));
     g.drawFittedText (b.getButtonText(), b.getLocalBounds().reduced (4, 2), juce::Justification::centred, 2, 0.8f);
 }
 
@@ -178,8 +246,8 @@ juce::Font ConsoleLookAndFeel::getPopupMenuFont() { return ledFont (15.0f); }
 
 void ConsoleLookAndFeel::drawPopupMenuBackground (juce::Graphics& g, int w, int h)
 {
-    g.fillAll (col::panelDark);
-    g.setColour (col::panelEdge);
+    g.fillAll (skin().panelDark);
+    g.setColour (skin().panelEdge);
     g.drawRect (0, 0, w, h);
 }
 
@@ -193,13 +261,13 @@ void ConsoleLookAndFeel::drawTextEditorOutline (juce::Graphics& g, int w, int h,
     const auto r = juce::Rectangle<float> (0, 0, (float) w, (float) h).reduced (0.5f);
     if ((bool) ed.getProperties()["invalid"])
     {
-        g.setColour (col::ledRed);
-        g.drawRoundedRectangle (r, 3.0f, 1.6f);
+        g.setColour (skin().ledRed);
+        g.drawRoundedRectangle (r, skin().screenCorner, 1.6f);
     }
     else if (ed.hasKeyboardFocus (true) && ! ed.isReadOnly())
     {
-        g.setColour (col::ledAmber.withAlpha (0.6f));
-        g.drawRoundedRectangle (r, 3.0f, 1.2f);
+        g.setColour (skin().ledAmber.withAlpha (0.6f));
+        g.drawRoundedRectangle (r, skin().screenCorner, 1.2f);
     }
 }
 

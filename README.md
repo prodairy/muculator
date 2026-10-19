@@ -47,6 +47,15 @@ Muculator gives you the new note and frequency. If the result lands **between tw
 
 > Example: an A4 sample at 120 BPM played at 126 BPM → 462 Hz, −15.5 ct from A#4. Use **127.14 BPM** to land on A#4.
 
+### Skins
+
+Click **SKIN** in the top bar to change the look. Fifteen skins are built in: five studio skins
+(**Console**, the default, **Pattern**, **Session**, **Modular**, **Studio Pro**) and five minimal pastel
+skins built from Sanzo Wada's *A Dictionary of Color Combinations* (**Seashell**, **Glaucous**,
+**Lavender**, **Lemon**, **Turquoise**), each also in a dark version. A skin is a small `.muskin` text file, so
+you can make your own, or ask Claude (or another AI assistant) to make one from a description.
+See the [skin guide](docs/SKINS.md).
+
 <details>
 <summary><b>More screenshots</b></summary>
 
@@ -136,6 +145,7 @@ VST is a registered trademark of Steinberg Media Technologies GmbH.
 - **Kolaylıklar:** Her modülde **?** yardım paneli; bir değere tıklayınca panoya kopyalanır; BPM ekranı sürükleyerek ya da tekerlekle değişir (Shift ile 0.1 adım); `T` tuşu TAP yapar.
 - **Converters:** dB ↔ gain, Q ↔ oktav ↔ Hz, ms ↔ Hz ↔ sample, mesafe ↔ ms.
 - **Loop:** Bar sayısından ms, saniye ve sample sayısı.
+- **Skin'ler:** Üst bardaki **SKIN** düğmesiyle görünüm değişir: 5 stüdyo skin'i (Console, Pattern, Session, Modular, Studio Pro) ve Sanzo Wada'nın *A Dictionary of Color Combinations* kitabındaki renklerle yapılmış 5 sade, pastel skin (Seashell, Glaucous, Lavender, Lemon, Turquoise); her birinin bir de koyu (Dark) versiyonu var. Skin, `.muskin` uzantılı küçük bir metin dosyasıdır; kendin yapabilir ya da [skin rehberini](docs/SKINS.md) Claude'a verip istediğin görünümü anlatarak yaptırabilirsin.
 
 **Stretch:** Eski BPM'i, eski notayı ve yeni BPM'i girersin; yeni notayı ve frekansı verir. Sonuç iki notanın arasında kalırsa **MİKROTON UYARISI** gösterir ve notaya tam oturması için hangi BPM'i kullanman gerektiğini yazar.
 

@@ -55,7 +55,7 @@ void LoopModule::refresh()
 
     if (! v.ok())
     {
-        out.setLines ({ { "LENGTH", "--", col::ledRed, 1.6f } });
+        out.setLines ({ { "LENGTH", "--", skin().ledRed, 1.6f } });
         table.setRows ({});
         return;
     }
@@ -63,14 +63,14 @@ void LoopModule::refresh()
     const double ms = calc::loopMs (*b.value, *nBars, *nBeats, unit);
     const double samples = calc::msToSamples (ms, *sr);
     out.setLines ({
-        { "SIGNATURE", juce::String (*nBeats, 0) + "/" + juce::String ((int) unit) + "  @ " + str (calc::fmt (*b.value, 2)) + " BPM", col::ledGreen },
-        { "MILLISECONDS", str (calc::fmt (ms, 2)) + " ms", col::ledAmber, 1.4f },
-        { "SECONDS", str (calc::fmt (ms / 1000.0, 4)) + " s", col::ledAmber, 1.4f },
-        { "SAMPLES", str (calc::fmt (samples, 1)), col::ledAmber, 1.4f },
+        { "SIGNATURE", juce::String (*nBeats, 0) + "/" + juce::String ((int) unit) + "  @ " + str (calc::fmt (*b.value, 2)) + " BPM", skin().ledGreen },
+        { "MILLISECONDS", str (calc::fmt (ms, 2)) + " ms", skin().ledAmber, 1.4f },
+        { "SECONDS", str (calc::fmt (ms / 1000.0, 4)) + " s", skin().ledAmber, 1.4f },
+        { "SAMPLES", str (calc::fmt (samples, 1)), skin().ledAmber, 1.4f },
         { "1 BAR", str (calc::fmtMs (calc::barMs (*b.value, *nBeats, unit))) + " ms" },
         { "TOTAL BEATS", str (calc::fmt (*nBars * *nBeats, 2)) },
         { "", std::abs (samples - std::round (samples)) > 1e-6 ? "Sample count is fractional: loop will drift unless trimmed"
-                                                               : "Sample-accurate loop length", std::abs (samples - std::round (samples)) > 1e-6 ? col::ledRed.withAlpha (0.85f) : col::silkDim },
+                                                               : "Sample-accurate loop length", std::abs (samples - std::round (samples)) > 1e-6 ? skin().ledRed.withAlpha (0.85f) : skin().screenText },
     });
 
     std::vector<juce::StringArray> rows;
@@ -97,7 +97,7 @@ void LoopModule::paint (juce::Graphics& g)
     if (! beatUnit.getBounds().isEmpty())
     {
         g.setFont (labelFont (10.5f));
-        g.setColour (col::silkscreen.withAlpha (0.85f));
+        g.setColour (skin().text.withAlpha (0.85f));
         g.drawText ("BEAT UNIT", beatUnit.getBounds().translated (0, -16).withHeight (15), juce::Justification::centredLeft);
     }
 }

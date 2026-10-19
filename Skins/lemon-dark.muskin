@@ -1,0 +1,46 @@
+{
+  "format": 1,
+  "name": "Lemon Dark",
+  "author": "Muculator",
+  "description": "Pale lemon yellow, corinthian pink and warm gray on charcoal (combination 169). Minimal pastel skin, dark version; colours from Sanzo Wada, A Dictionary of Color Combinations.",
+  "colors": {
+    "panel": "#262624",
+    "panelDark": "#1e1e1c",
+    "panelEdge": "#141413",
+    "recess": "#2c2c29",
+    "accent": "#f8b6ba",
+    "text": "#f0efe8",
+    "textDim": "#9d9e96",
+    "highlight": "#ffe98a",
+    "screen": "#22211a",
+    "screenEdge": "#171611",
+    "screenText": "#9a9478",
+    "ledRed": "#f8a4aa",
+    "ledAmber": "#ffe98a",
+    "ledGreen": "#c5dcc0",
+    "ledBlue": "#c4d3de",
+    "capRed": "#f8b6ba",
+    "capYellow": "#ffe98a",
+    "capGreen": "#c5dcc0",
+    "capBlue": "#c4d3de",
+    "capWhite": "#ffeb9c",
+    "capOrange": "#fcd0a5",
+    "buttonFace": "#373734",
+    "buttonText": "#f0efe8",
+    "litText": "#1e1e1c"
+  },
+  "style": {
+    "buttons": "flat",
+    "texture": "flat",
+    "buttonCorner": 4,
+    "sectionCorner": 6,
+    "screenCorner": 4,
+    "accentStripe": 2,
+    "screws": false,
+    "screenGlare": false
+  },
+  "fonts": {
+    "label": "",
+    "led": ""
+  }
+}

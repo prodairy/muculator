@@ -1,0 +1,46 @@
+{
+  "format": 1,
+  "name": "Seashell Dark",
+  "author": "Muculator",
+  "description": "Hermosa pink, seashell pink and calamine blue on a dark warm grey (combination 176). Minimal pastel skin, dark version; colours from Sanzo Wada, A Dictionary of Color Combinations.",
+  "colors": {
+    "panel": "#2a2426",
+    "panelDark": "#211c1e",
+    "panelEdge": "#151213",
+    "recess": "#302a2c",
+    "accent": "#f9c1ce",
+    "text": "#f3e6e2",
+    "textDim": "#a8979a",
+    "highlight": "#f9c1ce",
+    "screen": "#1b2223",
+    "screenEdge": "#121718",
+    "screenText": "#7f9898",
+    "ledRed": "#f59aae",
+    "ledAmber": "#fdd4bd",
+    "ledGreen": "#9fdcd6",
+    "ledBlue": "#8ccfe0",
+    "capRed": "#f4a3b5",
+    "capYellow": "#fde3a7",
+    "capGreen": "#b2e0d4",
+    "capBlue": "#9ad9dc",
+    "capWhite": "#f9c1ce",
+    "capOrange": "#fdc6a8",
+    "buttonFace": "#3a3235",
+    "buttonText": "#f3e6e2",
+    "litText": "#2a2426"
+  },
+  "style": {
+    "buttons": "flat",
+    "texture": "flat",
+    "buttonCorner": 4,
+    "sectionCorner": 6,
+    "screenCorner": 4,
+    "accentStripe": 2,
+    "screws": false,
+    "screenGlare": false
+  },
+  "fonts": {
+    "label": "",
+    "led": ""
+  }
+}

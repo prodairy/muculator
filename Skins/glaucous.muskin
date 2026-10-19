@@ -1,0 +1,46 @@
+{
+  "format": 1,
+  "name": "Glaucous",
+  "author": "Muculator",
+  "description": "Glaucous green, seashell pink and citron yellow (combination 150). Minimal pastel skin; colours from Sanzo Wada, A Dictionary of Color Combinations.",
+  "colors": {
+    "panel": "#eef3ef",
+    "panelDark": "#e1ebe5",
+    "panelEdge": "#c3d3ca",
+    "recess": "#f6f9f6",
+    "accent": "#b4cdc2",
+    "text": "#34403a",
+    "textDim": "#7b8a82",
+    "highlight": "#7e8429",
+    "screen": "#fbf1ea",
+    "screenEdge": "#ead2c3",
+    "screenText": "#9a8578",
+    "ledRed": "#c0584a",
+    "ledAmber": "#8f7d1e",
+    "ledGreen": "#4b7f66",
+    "ledBlue": "#4f7590",
+    "capRed": "#f3b9ad",
+    "capYellow": "#dfe09a",
+    "capGreen": "#b4cdc2",
+    "capBlue": "#b7cbe0",
+    "capWhite": "#b4cdc2",
+    "capOrange": "#fdd4bd",
+    "buttonFace": "#fbfcfa",
+    "buttonText": "#34403a",
+    "litText": "#34403a"
+  },
+  "style": {
+    "buttons": "flat",
+    "texture": "flat",
+    "buttonCorner": 4,
+    "sectionCorner": 6,
+    "screenCorner": 4,
+    "accentStripe": 2,
+    "screws": false,
+    "screenGlare": false
+  },
+  "fonts": {
+    "label": "",
+    "led": ""
+  }
+}

@@ -4,7 +4,7 @@ using namespace ui;
 
 ReverbModule::ReverbModule (ModuleContext& c)
     : ModuleBase ("reverb", "Reverb Time", c),
-      styles ({ "SMALL ROOM", "ROOM", "LARGE ROOM", "PLATE", "HALL" }, col::capBlue, 101, true)
+      styles ({ "SMALL ROOM", "ROOM", "LARGE ROOM", "PLATE", "HALL" }, Cap::Blue, 101, true)
 {
     addAndMakeVisible (styles);
     addAndMakeVisible (table);
@@ -35,7 +35,7 @@ void ReverbModule::refresh()
     {
         showErrors ({ str (b.error) });
         table.setRows ({});
-        room.setLines ({ { {}, "Enter a valid BPM in the top bar", col::ledRed } });
+        room.setLines ({ { {}, "Enter a valid BPM in the top bar", skin().ledRed } });
         return;
     }
     showErrors ({});
@@ -71,20 +71,20 @@ void ReverbModule::refresh()
     const bool inRange = totalS >= info.decayMinS * 0.9 && totalS <= info.decayMaxS * 1.1;
 
     std::vector<LedReadout::Line> lines {
-        { "SELECTED", str (r.label) + "  " + juce::String (info.name) + (sel == rec ? "  (REC)" : ""), col::ledGreen },
+        { "SELECTED", str (r.label) + "  " + juce::String (info.name) + (sel == rec ? "  (REC)" : ""), skin().ledGreen },
         { "PRE-DELAY / DECAY", str (calc::fmtMs (r.preDelayMs)) + " / " + str (calc::fmtMs (r.decayMs)) + " ms" },
         { "ROOM  L x W x H", str (calc::fmt (dims.length, 1)) + " x " + str (calc::fmt (dims.width, 1)) + " x "
-                                + str (calc::fmt (dims.height, 1)) + " m", col::ledAmber, 1.15f },
+                                + str (calc::fmt (dims.height, 1)) + " m", skin().ledAmber, 1.15f },
         { "", str (calc::fmt (dims.length * ft, 0)) + " x " + str (calc::fmt (dims.width * ft, 0)) + " x "
-                  + str (calc::fmt (dims.height * ft, 0)) + " ft   VOL " + str (calc::fmt (dims.volume, 0)) + " m3", col::ledAmber.withAlpha (0.7f) },
+                  + str (calc::fmt (dims.height * ft, 0)) + " ft   VOL " + str (calc::fmt (dims.volume, 0)) + " m3", skin().ledAmber.withAlpha (0.7f) },
         { "TYPICAL " + juce::String (info.name),
           str (calc::fmt (info.decayMinS, 1)) + " - " + str (calc::fmt (info.decayMaxS, 1)) + " s",
-          inRange ? col::ledAmber.withAlpha (0.7f) : col::ledRed },
+          inRange ? skin().ledAmber.withAlpha (0.7f) : skin().ledRed },
     };
     if (style == calc::ReverbStyle::Plate)
-        lines.push_back ({ "", "Plate = metal sheet; size shown is the equivalent room", col::ledBlue });
+        lines.push_back ({ "", "Plate = metal sheet; size shown is the equivalent room", skin().ledBlue });
     else if (! inRange)
-        lines.push_back ({ "", "Selected length is outside the typical range for this style", col::ledRed });
+        lines.push_back ({ "", "Selected length is outside the typical range for this style", skin().ledRed });
     room.setLines (lines);
 }
 

@@ -1,0 +1,46 @@
+{
+  "format": 1,
+  "name": "Turquoise",
+  "author": "Muculator",
+  "description": "Turquoise green, cobalt green, cream yellow and grenadine pink (combinations 230 and 300). Minimal pastel skin; colours from Sanzo Wada, A Dictionary of Color Combinations.",
+  "colors": {
+    "panel": "#eef6f2",
+    "panelDark": "#dcefe6",
+    "panelEdge": "#b9d8c9",
+    "recess": "#f6fbf8",
+    "accent": "#f7a592",
+    "text": "#2f3f3a",
+    "textDim": "#74897f",
+    "highlight": "#c95a43",
+    "screen": "#fff6ea",
+    "screenEdge": "#f0d9b8",
+    "screenText": "#a08c74",
+    "ledRed": "#c9503a",
+    "ledAmber": "#b07a20",
+    "ledGreen": "#2f8a5e",
+    "ledBlue": "#3f7f8f",
+    "capRed": "#f7a592",
+    "capYellow": "#fdd59a",
+    "capGreen": "#a9dcbc",
+    "capBlue": "#a9d6e3",
+    "capWhite": "#b5decc",
+    "capOrange": "#fdbf68",
+    "buttonFace": "#fbfdfc",
+    "buttonText": "#2f3f3a",
+    "litText": "#2f3f3a"
+  },
+  "style": {
+    "buttons": "flat",
+    "texture": "flat",
+    "buttonCorner": 4,
+    "sectionCorner": 6,
+    "screenCorner": 4,
+    "accentStripe": 2,
+    "screws": false,
+    "screenGlare": false
+  },
+  "fonts": {
+    "label": "",
+    "led": ""
+  }
+}

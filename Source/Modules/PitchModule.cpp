@@ -7,19 +7,19 @@ namespace
 juce::Colour centsColour (double cents)
 {
     const double a = std::abs (cents);
-    return a < 0.05 ? col::ledGreen : a < calc::kMicrotoneThresholdCents - 0.05 ? col::ledAmber : col::ledRed;
+    return a < 0.05 ? skin().ledGreen : a < calc::kMicrotoneThresholdCents - 0.05 ? skin().ledAmber : skin().ledRed;
 }
 } // namespace
 
 PitchModule::PitchModule (ModuleContext& c)
     : ModuleBase ("pitch", "Pitch", c),
-      tabs ({ "TRANSPOSE", "STRETCH", "FREQ > NOTE", "HARMONICS" }, col::capWhite, 301, false),
-      stMode ({ "NOTE", "FREQ" }, col::capGreen, 302, false),
-      hmMode ({ "NOTE", "FREQ" }, col::capGreen, 303, false),
-      hmSet ({ "ALL", "ODD", "EVEN" }, col::capWhite, 304, false),
-      hmWave ({ "OFF", "SAW", "SQUARE", "TRI" }, col::capYellow, 305, false),
-      hmCount ({ "16", "32", "64" }, col::capWhite, 306, false),
-      spelling ({ "#", "b" }, col::capWhite, 307, false)
+      tabs ({ "TRANSPOSE", "STRETCH", "FREQ > NOTE", "HARMONICS" }, Cap::White, 301, false),
+      stMode ({ "NOTE", "FREQ" }, Cap::Green, 302, false),
+      hmMode ({ "NOTE", "FREQ" }, Cap::Green, 303, false),
+      hmSet ({ "ALL", "ODD", "EVEN" }, Cap::White, 304, false),
+      hmWave ({ "OFF", "SAW", "SQUARE", "TRI" }, Cap::Yellow, 305, false),
+      hmCount ({ "16", "32", "64" }, Cap::White, 306, false),
+      spelling ({ "#", "b" }, Cap::White, 307, false)
 {
     auto s = state();
     a4Field.bind (s, "a4", "440");
@@ -173,22 +173,22 @@ void PitchModule::refreshTranspose (Validator& v)
     if (! v.ok())
     {
         tpOut.setLines ({ { "SOURCE", noteText (src) + "  " + str (calc::fmtHz (srcHz)) + " Hz" },
-                          { "RESULT", "--", col::ledRed, 1.8f } });
+                          { "RESULT", "--", skin().ledRed, 1.8f } });
         return;
     }
     const auto r = calc::transpose (srcHz, *semis, *cents, a4);
     if (r.target.nearestMidi < 0 || r.target.nearestMidi > 131)
     {
         v.errors.add ("Result is outside the MIDI note range (C-1 .. B9)");
-        tpOut.setLines ({ { "RESULT", "OUT OF RANGE", col::ledRed, 1.8f } });
+        tpOut.setLines ({ { "RESULT", "OUT OF RANGE", skin().ledRed, 1.8f } });
         return;
     }
     tpOut.setLines ({
         { "SOURCE", noteText (src) + "  " + str (calc::fmtHz (srcHz)) + " Hz" },
         { "SHIFT", str (calc::fmt (*semis, 2)) + " st  " + str (calc::fmtCents (*cents)) },
-        { "NEW NOTE", noteText (r.target.nearestMidi), col::ledGreen, 2.0f },
+        { "NEW NOTE", noteText (r.target.nearestMidi), skin().ledGreen, 2.0f },
         { "DEVIATION", str (calc::fmtCents (r.target.cents)), centsColour (r.target.cents) },
-        { "NEW FREQUENCY", str (calc::fmtHz (r.targetFreq)) + " Hz", col::ledAmber, 1.3f },
+        { "NEW FREQUENCY", str (calc::fmtHz (r.targetFreq)) + " Hz", skin().ledAmber, 1.3f },
         { "RATIO", "x" + str (calc::fmt (r.targetFreq / srcHz, 5)) },
     });
 }
@@ -208,7 +208,7 @@ void PitchModule::refreshStretch (Validator& v)
 
     if (! v.ok())
     {
-        stOut.setLines ({ { "NEW NOTE", "--", col::ledRed, 2.2f }, { "NEW FREQUENCY", "--", col::ledRed } });
+        stOut.setLines ({ { "NEW NOTE", "--", skin().ledRed, 2.2f }, { "NEW FREQUENCY", "--", skin().ledRed } });
         microtone.setVisible (false);
         return;
     }
@@ -218,16 +218,16 @@ void PitchModule::refreshStretch (Validator& v)
     if (r.note.nearestMidi < 0 || r.note.nearestMidi > 131)
     {
         v.errors.add ("Result is outside the MIDI note range (C-1 .. B9)");
-        stOut.setLines ({ { "NEW NOTE", "OUT OF RANGE", col::ledRed, 2.0f } });
+        stOut.setLines ({ { "NEW NOTE", "OUT OF RANGE", skin().ledRed, 2.0f } });
         microtone.setVisible (false);
         return;
     }
 
     stOut.setLines ({
-        { "OLD", noteWithCents (oldInfo) + "  " + str (calc::fmtHz (oldHz)) + " Hz", col::ledAmber.withAlpha (0.75f) },
-        { "NEW NOTE", noteText (r.note.nearestMidi), r.microtone ? col::ledRed : col::ledGreen, 2.2f },
+        { "OLD", noteWithCents (oldInfo) + "  " + str (calc::fmtHz (oldHz)) + " Hz", skin().ledAmber.withAlpha (0.75f) },
+        { "NEW NOTE", noteText (r.note.nearestMidi), r.microtone ? skin().ledRed : skin().ledGreen, 2.2f },
         { "DEVIATION", str (calc::fmtCents (r.note.cents)), centsColour (r.note.cents), 1.1f },
-        { "NEW FREQUENCY", str (calc::fmtHz (r.newFreq)) + " Hz", col::ledAmber, 1.3f },
+        { "NEW FREQUENCY", str (calc::fmtHz (r.newFreq)) + " Hz", skin().ledAmber, 1.3f },
         { "PITCH SHIFT", (r.semitones >= 0 ? "+" : "") + str (calc::fmt (r.semitones, 2)) + " st" },
         { "SPEED", "x" + str (calc::fmt (r.ratio, 4)) + "  (" + str (calc::fmt (r.ratio * 100.0, 2)) + " %)" },
     });
@@ -261,13 +261,13 @@ void PitchModule::refreshFreq (Validator& v)
     const auto f = v.num (fnFreq, "Frequency", 1, 30000);
     if (! v.ok())
     {
-        fnOut.setLines ({ { "NOTE", "--", col::ledRed, 2.2f } });
+        fnOut.setLines ({ { "NOTE", "--", skin().ledRed, 2.2f } });
         return;
     }
     const auto n = calc::analyse (*f, a4);
     const double sr = ctx.hostSampleRate();
     fnOut.setLines ({
-        { "NEAREST NOTE", noteText (n.nearestMidi), centsColour (n.cents) == col::ledRed ? col::ledAmber : col::ledGreen, 2.2f },
+        { "NEAREST NOTE", noteText (n.nearestMidi), centsColour (n.cents) == skin().ledRed ? skin().ledAmber : skin().ledGreen, 2.2f },
         { "DEVIATION", str (calc::fmtCents (n.cents)), centsColour (n.cents), 1.1f },
         { "NOTE FREQUENCY", str (calc::fmtHz (n.nearestFreq)) + " Hz" },
         { "MIDI (exact)", str (calc::fmt (n.exactMidi, 3)) },
@@ -318,7 +318,7 @@ void PitchModule::refreshHarmonics (Validator& v)
     hmTable.setRecommendedRow (! hs.empty() && hs.front().n == 1 ? 0 : -1);
     for (int i = 0; i < (int) hs.size(); ++i)
         if (std::abs (hs[(size_t) i].note.cents) >= calc::kMicrotoneThresholdCents)
-            hmTable.setRowColour (i, col::ledRed.withAlpha (0.85f));
+            hmTable.setRowColour (i, skin().ledRed.withAlpha (0.85f));
 }
 
 void PitchModule::paint (juce::Graphics& g)
@@ -330,15 +330,15 @@ void PitchModule::paint (juce::Graphics& g)
     drawSection (g, outputArea, outTitles[tab]);
 
     g.setFont (labelFont (10.5f));
-    g.setColour (col::silkscreen.withAlpha (0.85f));
+    g.setColour (skin().text.withAlpha (0.85f));
     g.drawText ("NOTE NAMES", spelling.getBounds().translated (0, -16).withHeight (15), juce::Justification::centredLeft);
-    g.setColour (col::silkDim.withAlpha (0.4f));
+    g.setColour (skin().textDim.withAlpha (0.4f));
     g.fillRect (inputArea.getX() + 10, a4Field.getY() - 8, inputArea.getWidth() - 20, 1);
 
     if (tab == 1)
     {
         auto hint = stNewBpm.getBounds().translated (0, stNewBpm.getHeight() + 4).withHeight (34);
-        g.setColour (col::silkDim);
+        g.setColour (skin().textDim);
         g.setFont (labelFont (10.0f, false));
         g.drawFittedText ("NEW BPM = top bar BPM" + juce::String (ctx.isChained() ? " (chained)" : " for this module")
                               + ". Speed change = pitch change (varispeed).",
@@ -347,7 +347,7 @@ void PitchModule::paint (juce::Graphics& g)
     else if (tab == 3)
     {
         g.setFont (labelFont (10.5f));
-        g.setColour (col::silkscreen.withAlpha (0.85f));
+        g.setColour (skin().text.withAlpha (0.85f));
         for (auto [group, caption] : { std::pair { &hmSet, "SERIES" }, std::pair { &hmWave, "WAVEFORM LEVELS" }, std::pair { &hmCount, "COUNT" } })
             g.drawText (caption, group->getBounds().translated (0, -16).withHeight (15), juce::Justification::centredLeft);
     }

@@ -1,0 +1,46 @@
+{
+  "format": 1,
+  "name": "Modular",
+  "author": "Muculator",
+  "description": "Modern modular studio: anthracite, one orange accent, rounded corners.",
+  "colors": {
+    "panel": "#2d2d2f",
+    "panelDark": "#222224",
+    "panelEdge": "#151516",
+    "recess": "#252527",
+    "accent": "#ff6b1a",
+    "text": "#dededf",
+    "textDim": "#8c8c90",
+    "highlight": "#ff8a3d",
+    "screen": "#1a1a1b",
+    "screenEdge": "#111112",
+    "screenText": "#7e7e82",
+    "ledRed": "#ff5050",
+    "ledAmber": "#ff9a52",
+    "ledGreen": "#78dba0",
+    "ledBlue": "#7fb4ff",
+    "capRed": "#ff5050",
+    "capYellow": "#ff8a3d",
+    "capGreen": "#ff6b1a",
+    "capBlue": "#ff8a3d",
+    "capWhite": "#e4e4e6",
+    "capOrange": "#ff6b1a",
+    "buttonFace": "#3a3a3d",
+    "buttonText": "#d2d2d4",
+    "litText": "#151516"
+  },
+  "style": {
+    "buttons": "flat",
+    "texture": "flat",
+    "buttonCorner": 7,
+    "sectionCorner": 10,
+    "screenCorner": 6,
+    "accentStripe": 0,
+    "screws": false,
+    "screenGlare": false
+  },
+  "fonts": {
+    "label": "",
+    "led": ""
+  }
+}

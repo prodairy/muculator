@@ -1,0 +1,46 @@
+{
+  "format": 1,
+  "name": "Seashell",
+  "author": "Muculator",
+  "description": "Hermosa pink, seashell pink and calamine blue (combination 176). Minimal pastel skin; colours from Sanzo Wada, A Dictionary of Color Combinations.",
+  "colors": {
+    "panel": "#fbf3ee",
+    "panelDark": "#f6e4da",
+    "panelEdge": "#dcc6bb",
+    "recess": "#fdf8f5",
+    "accent": "#f9c1ce",
+    "text": "#3e3633",
+    "textDim": "#8a7a74",
+    "highlight": "#b8607a",
+    "screen": "#eef7f6",
+    "screenEdge": "#c9e3e2",
+    "screenText": "#7d9998",
+    "ledRed": "#c44d64",
+    "ledAmber": "#b5733f",
+    "ledGreen": "#2f8a7e",
+    "ledBlue": "#3f7f9a",
+    "capRed": "#f4a3b5",
+    "capYellow": "#fde3a7",
+    "capGreen": "#b2e0d4",
+    "capBlue": "#9ad9dc",
+    "capWhite": "#f9c1ce",
+    "capOrange": "#fdc6a8",
+    "buttonFace": "#fffaf7",
+    "buttonText": "#3e3633",
+    "litText": "#3e3633"
+  },
+  "style": {
+    "buttons": "flat",
+    "texture": "flat",
+    "buttonCorner": 4,
+    "sectionCorner": 6,
+    "screenCorner": 4,
+    "accentStripe": 2,
+    "screws": false,
+    "screenGlare": false
+  },
+  "fonts": {
+    "label": "",
+    "led": ""
+  }
+}

@@ -30,8 +30,8 @@ private:
 class IllumButton : public juce::TextButton
 {
 public:
-    IllumButton (const juce::String& text, juce::Colour cap, bool toggles = true);
-    void setCap (juce::Colour c);
+    IllumButton (const juce::String& text, Cap cap, bool toggles = true);
+    void setCap (Cap c);
     /** Lights the button briefly (used for TAP). */
     void flash();
 
@@ -77,6 +77,7 @@ public:
     void mouseDrag (const juce::MouseEvent&) override;
     void mouseUp (const juce::MouseEvent&) override;
     void mouseWheelMove (const juce::MouseEvent&, const juce::MouseWheelDetails&) override;
+    void lookAndFeelChanged() override { applyTextColour(); }
 
 private:
     juce::String caption, unit, badge;
@@ -88,6 +89,7 @@ private:
     int dragStepsApplied = 0;
     bool dragged = false;
     float wheelAccum = 0;
+    void applyTextColour();
 };
 
 //==============================================================================
@@ -121,7 +123,7 @@ public:
     struct Line
     {
         juce::String label, value;
-        juce::Colour colour = col::ledAmber;
+        juce::Colour colour = skin().ledAmber;
         float scale = 1.0f; // value size multiplier
     };
 
@@ -222,7 +224,7 @@ public:
 private:
     juce::String title, footer;
     juce::StringArray columns;
-    IllumButton closeButton { "CLOSE", col::capWhite, false };
+    IllumButton closeButton { "CLOSE", Cap::White, false };
 };
 
 //==============================================================================
@@ -230,7 +232,7 @@ private:
 class ButtonGroup final : public juce::Component
 {
 public:
-    ButtonGroup (juce::StringArray labels, juce::Colour cap, int radioId, bool vertical);
+    ButtonGroup (juce::StringArray labels, Cap cap, int radioId, bool vertical);
     void setSelected (int index, bool notify);
     int getSelected() const { return selected; }
     IllumButton& button (int i) { return *buttons[(size_t) i]; }

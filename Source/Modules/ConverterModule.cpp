@@ -128,12 +128,12 @@ void ConverterModule::updateGain (Src src)
     }
 
     gainErr = v.errors;
-    if (! v.ok()) { gainOut.setLines ({ { "", "--", col::ledRed } }); return; }
+    if (! v.ok()) { gainOut.setLines ({ { "", "--", skin().ledRed } }); return; }
     const double g = calc::dbToGain (db);
     gainOut.setLines ({
-        { "AMPLITUDE", "x" + str (calc::fmt (g, 4)) + "  (" + str (calc::fmt (g * 100.0, 2)) + " %)", col::ledGreen },
+        { "AMPLITUDE", "x" + str (calc::fmt (g, 4)) + "  (" + str (calc::fmt (g * 100.0, 2)) + " %)", skin().ledGreen },
         { "POWER", "x" + str (calc::fmt (g * g, 4)) },
-        { "", "+6 dB = x2   -6 dB = x0.5   +20 dB = x10", col::silkDim },
+        { "", "+6 dB = x2   -6 dB = x0.5   +20 dB = x10", skin().screenText },
     });
 }
 
@@ -156,10 +156,10 @@ void ConverterModule::updateEq (Src src)
         eqOct.setText (clean (calc::qToOctaves (*q), 4));
 
     eqErr = v.errors;
-    if (! v.ok()) { eqOut.setLines ({ { "", "--", col::ledRed } }); return; }
+    if (! v.ok()) { eqOut.setLines ({ { "", "--", skin().ledRed } }); return; }
     const auto band = calc::bandForQ (*centre, *q);
     eqOut.setLines ({
-        { "BANDWIDTH", str (calc::fmtHz (band.widthHz)) + " Hz", col::ledGreen },
+        { "BANDWIDTH", str (calc::fmtHz (band.widthHz)) + " Hz", skin().ledGreen },
         { "LOW -3 dB", str (calc::fmtHz (band.lowHz)) + " Hz" },
         { "HIGH -3 dB", str (calc::fmtHz (band.highHz)) + " Hz" },
     });
@@ -205,10 +205,10 @@ void ConverterModule::updateTime (Src src)
         tSamples.setText ({});
 
     timeErr = v.errors;
-    if (! v.ok() || ! ms) { tOut.setLines ({ { "", "--", col::ledRed } }); return; }
+    if (! v.ok() || ! ms) { tOut.setLines ({ { "", "--", skin().ledRed } }); return; }
 
     std::vector<LedReadout::Line> lines {
-        { "SECONDS", str (calc::fmt (*ms / 1000.0, 5)) + " s", col::ledGreen },
+        { "SECONDS", str (calc::fmt (*ms / 1000.0, 5)) + " s", skin().ledGreen },
         { "SAMPLES", str (calc::fmt (calc::msToSamples (*ms, *sr), 2)) + " @ " + str (calc::fmt (*sr, 0)) },
     };
     if (const auto b = bpm(); b.ok())
@@ -235,11 +235,11 @@ void ConverterModule::updateDistance (Src src)
         dMs.setText (clean (calc::metresToMs (*metres, *temp), 4));
 
     distErr = v.errors;
-    if (! v.ok() || ! metres) { dOut.setLines ({ { "", "--", col::ledRed } }); return; }
+    if (! v.ok() || ! metres) { dOut.setLines ({ { "", "--", skin().ledRed } }); return; }
     const double ms = calc::metresToMs (*metres, *temp);
     const double sr = ctx.hostSampleRate();
     dOut.setLines ({
-        { "FEET", str (calc::fmt (*metres * 3.28084, 3)) + " ft", col::ledGreen },
+        { "FEET", str (calc::fmt (*metres * 3.28084, 3)) + " ft", skin().ledGreen },
         { "SAMPLES", str (calc::fmt (calc::msToSamples (ms, sr), 1)) + " @ " + str (calc::fmt (sr, 0)) },
         { "SPEED OF SOUND", str (calc::fmt (calc::speedOfSound (*temp), 1)) + " m/s" },
     });
