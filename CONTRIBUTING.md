@@ -28,4 +28,5 @@ Please keep the console look: dark panel, LED readouts, lit buttons.
 
 - One topic per PR, with a short description of what changed and why.
 - Follow the existing code style (JUCE style: 4 spaces, a space before `(`).
+- CI builds Windows + macOS, runs the tests and pluginval / auval, and attaches every screen as PNG (`Snapshots-Windows`, `Snapshots-macOS` on the run page).
 - By contributing you agree your code is released under the project's AGPLv3 license.

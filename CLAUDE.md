@@ -37,7 +37,7 @@ auval -v aufx Mclc Mucu                                   # AU validation (macOS
 | `Source/PluginEditor.*` | Top bar (BPM, TAP, CHAIN, HOST SYNC), module switcher, implements `ModuleContext`. |
 | `Source/PluginProcessor.*` | Pass-through audio; reads host BPM and sample rate into atomics; stores state as a ValueTree. |
 | `Tests/Snapshot.cpp` | Headless renderer + invalid-input smoke test. |
-| `.github/workflows/build.yml` | Windows + macOS CI; a `v*` tag publishes a GitHub Release with zips. |
+| `.github/workflows/build.yml` | Windows + macOS CI: unit tests, snapshot smoke test (PNGs uploaded as `Snapshots-*` artifacts), pluginval (VST3, strictness 10), auval (AU). A `v*` tag publishes a GitHub Release with zips. |
 
 ## Decisions (do not change without asking)
 
