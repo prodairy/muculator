@@ -102,6 +102,48 @@ int main()
         near ("H3 cents ~ +1.96", h[2].note.cents, 1.955, 1e-3);
         near ("H7 cents ~ -31.2", h[6].note.cents, -31.174, 1e-3);
         truth ("capped at 22k", harmonics (5000, 16).size() == 4);
+
+        auto odd = harmonics (110, 16, HarmonicSet::Odd);
+        truth ("16 odd harmonics", odd.size() == 16);
+        truth ("odd: 1, 3, 5", odd[0].n == 1 && odd[1].n == 3 && odd[2].n == 5);
+        truth ("odd: last is 31", odd.back().n == 31);
+        auto even = harmonics (110, 16, HarmonicSet::Even);
+        truth ("even: 2, 4 .. 32", even[0].n == 2 && even[1].n == 4 && even.back().n == 32);
+        near ("even H2 freq", even[0].freq, 220);
+        truth ("64 harmonics", harmonics (110, 64).size() == 64);
+        truth ("odd capped at 22k", harmonics (5000, 16, HarmonicSet::Odd).size() == 2); // 5k, 15k (25k is cut)
+
+        near ("saw H3", harmonicLevel (Waveform::Saw, 3), 1.0 / 3.0);
+        near ("saw H2", harmonicLevel (Waveform::Saw, 2), 0.5);
+        near ("square H3", harmonicLevel (Waveform::Square, 3), 1.0 / 3.0);
+        near ("square H2 absent", harmonicLevel (Waveform::Square, 2), 0.0);
+        near ("triangle H3", harmonicLevel (Waveform::Triangle, 3), 1.0 / 9.0);
+        near ("triangle H4 absent", harmonicLevel (Waveform::Triangle, 4), 0.0);
+        near ("fundamental = 1", harmonicLevel (Waveform::Triangle, 1), 1.0);
+        truth ("square is odd", harmonicSetFor (Waveform::Square) == HarmonicSet::Odd);
+        truth ("saw is all", harmonicSetFor (Waveform::Saw) == HarmonicSet::All);
+    }
+
+    // --- note spelling and tuning reference
+    truth ("C#4 flat = Db4", noteName (61, true) == "Db4");
+    truth ("A#3 flat = Bb3", noteName (58, true) == "Bb3");
+    truth ("naturals unchanged", noteName (60, true) == "C4" && noteName (64, true) == "E4");
+    truth ("sharps default", noteName (61) == "C#4");
+    near ("A4 @432", midiToFreq (69, 432), 432);
+    near ("A5 @442", midiToFreq (81, 442), 884);
+    near ("freqToMidi @432", freqToMidi (432, 432), 69);
+    {
+        auto n = analyse (440, 432); // 440 Hz is +31.8 ct above A4 = 432
+        truth ("440 @432 -> A4", n.nearestMidi == 69);
+        near ("440 @432 cents", n.cents, 1200 * std::log2 (440.0 / 432.0), 1e-9);
+        near ("note Hz @432", n.nearestFreq, 432);
+        auto t = transpose (432, 12, 0, 432);
+        truth ("transpose @432 = A5", noteName (t.target.nearestMidi) == "A5");
+        near ("transpose @432 in tune", t.target.cents, 0, 1e-9);
+        auto s = stretch (120, 432, 126, kMicrotoneThresholdCents, 432);
+        near ("stretch @432 lands on A#4 bpm", stretch (120, 432, s.bpmForNearest, kMicrotoneThresholdCents, 432).note.cents, 0, 1e-6);
+        auto h = harmonics (432, 2, HarmonicSet::All, 432);
+        near ("harmonic @432 in tune", h[1].note.cents, 0, 1e-9);
     }
 
     // --- reverb

@@ -65,3 +65,21 @@ void DelayModule::layoutContent (juce::Rectangle<int> r)
     table.setBounds (tableArea.reduced (8).withTrimmedTop (22));
     summary.setBounds (summaryArea.reduced (8).withTrimmedTop (22));
 }
+
+juce::String DelayModule::helpText() const
+{
+    return R"(# What it does
+Lists every note value from 1/1 to 1/512 at the current tempo: straight, dotted and triplet, in milliseconds and in Hz.
+# How to use
+1. Set the tempo in the top bar, or turn on HOST SYNC.
+2. Find the note value you want. The amber row is 1/4, one beat.
+3. Type the ms value into a delay, or the Hz value into an LFO rate. Click a value to copy it.
+# Example
+120 BPM: 1/8 = 250 ms, dotted 1/8 = 375 ms, triplet 1/8 = 166.7 ms.
+===
+# Terms
+- DOTTED (D): 1.5 x the note. A dotted 1/8 delay gives the classic galloping echo.
+- TRIPLET (T): 2/3 of the note; three of them fit in the space of two.
+- Hz: how many times per second the note repeats. Use it for LFO, tremolo, auto-pan or chorus rates.
+- 1 BAR: four beats in 4/4.)";
+}

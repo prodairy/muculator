@@ -4,6 +4,20 @@ namespace ui
 {
 juce::String str (const std::string& s) { return juce::String::fromUTF8 (s.c_str()); }
 
+juce::String copyableValue (const juce::String& shown)
+{
+    auto tokens = juce::StringArray::fromTokens (shown.trim(), " ", {});
+    tokens.removeEmptyStrings();
+    if (tokens.size() == 0 || tokens.size() > 2)
+        return shown.trim();
+    const auto& first = tokens[0];
+    const bool numeric = first.containsOnly ("+-0123456789.") && first.containsAnyOf ("0123456789")
+                         && calc::parseNumber (first.toStdString(), {}).ok();
+    if (! numeric)
+        return shown.trim();
+    return first.trimCharactersAtStart ("+");
+}
+
 //==============================================================================
 IllumButton::IllumButton (const juce::String& text, juce::Colour cap, bool toggles)
     : juce::TextButton (text)
@@ -99,7 +113,68 @@ LedField::LedField (const juce::String& cap, const juce::String& u, const juce::
     };
     editor.onReturnKey = [this] { editor.giveAwayKeyboardFocus(); };
     editor.onEscapeKey = [this] { editor.giveAwayKeyboardFocus(); };
+    editor.onFocusLost = [this] { if (nudge) editor.setInterceptsMouseClicks (false, false); };
     addAndMakeVisible (editor);
+}
+
+void LedField::setNudger (std::function<void (int, bool)> n)
+{
+    nudge = std::move (n);
+    // The field takes the mouse itself so it can tell a drag from a click; a click hands over to the editor.
+    editor.setInterceptsMouseClicks (nudge == nullptr, nudge == nullptr);
+    setMouseCursor (nudge ? juce::MouseCursor::UpDownResizeCursor : juce::MouseCursor::NormalCursor);
+}
+
+void LedField::mouseDown (const juce::MouseEvent&)
+{
+    dragStepsApplied = 0;
+    dragged = false;
+}
+
+void LedField::mouseDrag (const juce::MouseEvent& e)
+{
+    if (! nudge || editor.isReadOnly())
+        return;
+    const int steps = -e.getDistanceFromDragStartY() / 4; // 4 px per step, up = more
+    if (steps != dragStepsApplied)
+    {
+        dragged = true;
+        nudge (steps - dragStepsApplied, e.mods.isShiftDown());
+        dragStepsApplied = steps;
+    }
+}
+
+void LedField::mouseUp (const juce::MouseEvent&)
+{
+    if (nudge && ! dragged)
+    {
+        editor.setInterceptsMouseClicks (true, true);
+        editor.grabKeyboardFocus();
+    }
+}
+
+void LedField::mouseWheelMove (const juce::MouseEvent& e, const juce::MouseWheelDetails& w)
+{
+    if (! nudge || editor.isReadOnly())
+    {
+        Component::mouseWheelMove (e, w);
+        return;
+    }
+    wheelAccum += w.deltaY * (w.isReversed ? -1.0f : 1.0f);
+    int steps = 0;
+    if (! w.isSmooth)
+    {
+        steps = wheelAccum > 0 ? 1 : -1;
+        wheelAccum = 0;
+    }
+    else
+    {
+        // Trackpads send many small deltas: add them up.
+        while (wheelAccum >= 0.05f)  { ++steps; wheelAccum -= 0.05f; }
+        while (wheelAccum <= -0.05f) { --steps; wheelAccum += 0.05f; }
+    }
+    if (steps != 0)
+        nudge (steps, e.mods.isShiftDown());
 }
 
 void LedField::bind (juce::ValueTree tree, const juce::Identifier& prop, const juce::String& defaultText)
@@ -213,6 +288,14 @@ void NotePicker::setMidi (int midi)
     octave.setSelectedId (juce::jlimit (-1, 9, midi / 12 - 1) + 2, juce::dontSendNotification);
 }
 
+void NotePicker::setFlats (bool flats)
+{
+    for (int i = 0; i < 12; ++i)
+        pitch.changeItemText (i + 1, str (calc::pitchClassName (i, flats)));
+    pitch.setSelectedId (pitch.getSelectedId(), juce::dontSendNotification);
+    pitch.repaint();
+}
+
 void NotePicker::changed()
 {
     if (boundTree.isValid())
@@ -237,15 +320,20 @@ void NotePicker::resized()
 }
 
 //==============================================================================
+LedReadout::LedReadout()
+{
+    setTooltip ("Click a value to copy it");
+}
+
 void LedReadout::setLines (std::vector<Line> l)
 {
     lines = std::move (l);
     repaint();
 }
 
-void LedReadout::paint (juce::Graphics& g)
+std::vector<juce::Rectangle<float>> LedReadout::lineAreas() const
 {
-    drawScreen (g, getLocalBounds().toFloat());
+    std::vector<juce::Rectangle<float>> areas;
     auto r = getLocalBounds().reduced (10, 6).toFloat();
     for (auto& line : lines)
     {
@@ -253,6 +341,47 @@ void LedReadout::paint (juce::Graphics& g)
         auto row = r.removeFromTop (h);
         if (row.getBottom() > (float) getHeight())
             break;
+        areas.push_back (row);
+    }
+    return areas;
+}
+
+int LedReadout::copyableLineAt (juce::Point<int> p) const
+{
+    const auto areas = lineAreas();
+    for (size_t i = 0; i < areas.size(); ++i)
+        if (areas[i].contains (p.toFloat()))
+            return lines[i].label.isNotEmpty() && lines[i].value != "--" ? (int) i : -1;
+    return -1;
+}
+
+void LedReadout::mouseDown (const juce::MouseEvent& e)
+{
+    if (const int i = copyableLineAt (e.getPosition()); i >= 0)
+    {
+        juce::SystemClipboard::copyTextToClipboard (copyableValue (lines[(size_t) i].value));
+        flash.trigger (i, 0);
+    }
+}
+
+void LedReadout::mouseMove (const juce::MouseEvent& e)
+{
+    setMouseCursor (copyableLineAt (e.getPosition()) >= 0 ? juce::MouseCursor::PointingHandCursor : juce::MouseCursor::NormalCursor);
+}
+
+void LedReadout::paint (juce::Graphics& g)
+{
+    drawScreen (g, getLocalBounds().toFloat());
+    const auto areas = lineAreas();
+    for (size_t i = 0; i < areas.size(); ++i)
+    {
+        const auto& line = lines[i];
+        const auto row = areas[i];
+        if (flash.isOn ((int) i))
+        {
+            g.setColour (col::ledGreen.withAlpha (0.18f));
+            g.fillRect (row.expanded (6.0f, 0.0f));
+        }
         if (line.label.isNotEmpty())
         {
             g.setColour (col::silkDim);
@@ -261,7 +390,13 @@ void LedReadout::paint (juce::Graphics& g)
         }
         g.setColour (line.colour);
         g.setFont (ledFont (lineHeight * 0.72f * line.scale));
-        if (line.label.isEmpty())
+        if (flash.isOn ((int) i))
+        {
+            g.setColour (col::ledGreen);
+            g.setFont (ledFont (lineHeight * 0.72f));
+            g.drawText ("COPIED", row, juce::Justification::centredRight);
+        }
+        else if (line.label.isEmpty())
             g.drawFittedText (line.value, row.toNearestInt(), juce::Justification::centredLeft, 2, 0.7f);
         else
             g.drawText (line.value, row, juce::Justification::centredRight);
@@ -269,6 +404,34 @@ void LedReadout::paint (juce::Graphics& g)
 }
 
 //==============================================================================
+LedTable::LedTable()
+{
+    setTooltip ("Click a value to copy it");
+}
+
+std::vector<float> LedTable::columnEdges (juce::Rectangle<float> area) const
+{
+    float total = 0;
+    for (auto w : widths) total += w;
+    std::vector<float> xs;
+    float x = area.getX();
+    for (auto w : widths) { xs.push_back (x); x += area.getWidth() * w / total; }
+    xs.push_back (area.getRight());
+    return xs;
+}
+
+int LedTable::columnAt (juce::Point<int> p) const
+{
+    auto area = getLocalBounds().toFloat().reduced (6.0f, 4.0f);
+    if (maxFirstRow() > 0)
+        area.removeFromRight (6.0f);
+    const auto xs = columnEdges (area);
+    for (size_t c = 0; c + 1 < xs.size(); ++c)
+        if ((float) p.x >= xs[c] && (float) p.x < xs[c + 1])
+            return (int) c;
+    return -1;
+}
+
 void LedTable::setColumns (juce::StringArray h, std::vector<float> w)
 {
     headers = std::move (h);
@@ -280,6 +443,7 @@ void LedTable::setRows (std::vector<juce::StringArray> r)
 {
     rows = std::move (r);
     rowColours.clear();
+    firstRow = juce::jlimit (0, maxFirstRow(), firstRow);
     repaint();
 }
 
@@ -288,28 +452,66 @@ void LedTable::setRowColour (int row, juce::Colour c) { rowColours[row] = c; rep
 float LedTable::rowHeight() const
 {
     if (rows.empty()) return 20.0f;
-    return juce::jlimit (14.0f, 30.0f, ((float) getHeight() - headerHeight() - 8.0f) / (float) rows.size());
+    return juce::jlimit (18.0f, 30.0f, ((float) getHeight() - headerHeight() - 8.0f) / (float) rows.size());
+}
+
+int LedTable::visibleRows() const
+{
+    return juce::jmax (1, (int) (((float) getHeight() - headerHeight() - 8.0f) / rowHeight()));
+}
+
+void LedTable::scrollTo (int row)
+{
+    row = juce::jlimit (0, maxFirstRow(), row);
+    if (row != firstRow)
+    {
+        firstRow = row;
+        hover = -1;
+        repaint();
+    }
 }
 
 int LedTable::rowAt (juce::Point<int> p) const
 {
     const float y = (float) p.y - 4.0f - headerHeight();
     if (y < 0) return -1;
-    const int r = (int) (y / rowHeight());
+    const int visible = (int) (y / rowHeight());
+    if (visible >= visibleRows()) return -1;
+    const int r = firstRow + visible;
     return r < (int) rows.size() ? r : -1;
+}
+
+void LedTable::mouseWheelMove (const juce::MouseEvent& e, const juce::MouseWheelDetails& w)
+{
+    if (maxFirstRow() == 0)
+    {
+        Component::mouseWheelMove (e, w);
+        return;
+    }
+    // Trackpads send many small deltas: add them up and move one row per step.
+    wheelAccum += w.deltaY * (w.isReversed ? -1.0f : 1.0f);
+    const float step = w.isSmooth ? 0.04f : 0.0f;
+    int rowsToMove = 0;
+    if (step == 0.0f)
+    {
+        rowsToMove = wheelAccum > 0 ? -3 : 3;
+        wheelAccum = 0;
+    }
+    else
+    {
+        while (wheelAccum >= step)  { --rowsToMove; wheelAccum -= step; }
+        while (wheelAccum <= -step) { ++rowsToMove; wheelAccum += step; }
+    }
+    scrollTo (firstRow + rowsToMove);
 }
 
 void LedTable::paint (juce::Graphics& g)
 {
     drawScreen (g, getLocalBounds().toFloat());
     auto area = getLocalBounds().toFloat().reduced (6.0f, 4.0f);
-
-    float total = 0;
-    for (auto w : widths) total += w;
-    std::vector<float> xs;
-    float x = area.getX();
-    for (auto w : widths) { xs.push_back (x); x += area.getWidth() * w / total; }
-    xs.push_back (area.getRight());
+    const bool scrolls = maxFirstRow() > 0;
+    const auto barArea = scrolls ? area.removeFromRight (6.0f).withTrimmedLeft (3.0f) : juce::Rectangle<float>();
+    const auto xs = columnEdges (area);
 
     auto header = area.removeFromTop (headerHeight());
     g.setFont (labelFont (10.5f));
@@ -321,7 +523,18 @@ void LedTable::paint (juce::Graphics& g)
     g.drawHorizontalLine ((int) header.getBottom(), area.getX(), area.getRight());
 
     const float rh = rowHeight();
-    for (int i = 0; i < (int) rows.size(); ++i)
+    const int lastRow = juce::jmin ((int) rows.size(), firstRow + visibleRows());
+    if (scrolls)
+    {
+        const auto track = barArea.withY (area.getY()).withHeight (rh * (float) visibleRows());
+        g.setColour (col::silkDim.withAlpha (0.15f));
+        g.fillRoundedRectangle (track, 1.5f);
+        const float n = (float) rows.size();
+        g.setColour (col::ledAmber.withAlpha (0.6f));
+        g.fillRoundedRectangle (track.withY (track.getY() + track.getHeight() * (float) firstRow / n)
+                                     .withHeight (track.getHeight() * (float) visibleRows() / n), 1.5f);
+    }
+    for (int i = firstRow; i < lastRow; ++i)
     {
         auto row = area.removeFromTop (rh);
         if (i == recommended)
@@ -355,18 +568,37 @@ void LedTable::paint (juce::Graphics& g)
         const auto& cells = rows[(size_t) i];
         for (int c = 0; c < cells.size() && c + 1 < (int) xs.size(); ++c)
         {
+            const auto cell = juce::Rectangle<float> (xs[(size_t) c], row.getY(), xs[(size_t) c + 1] - xs[(size_t) c], rh);
+            const auto just = c == 0 ? juce::Justification::centredLeft : juce::Justification::centredRight;
+            if (flash.isOn (i, c))
+            {
+                g.setColour (col::ledGreen.withAlpha (0.2f));
+                g.fillRect (cell);
+                g.setColour (col::ledGreen);
+                g.drawText ("COPIED", cell.reduced (5, 0), just);
+                continue;
+            }
             g.setColour (c == 0 ? baseColour.brighter (0.15f) : baseColour);
-            g.drawText (cells[c], juce::Rectangle<float> (xs[(size_t) c], row.getY(), xs[(size_t) c + 1] - xs[(size_t) c], rh).reduced (5, 0),
-                        c == 0 ? juce::Justification::centredLeft : juce::Justification::centredRight);
+            g.drawText (cells[c], cell.reduced (5, 0), just);
         }
     }
 }
 
 void LedTable::mouseDown (const juce::MouseEvent& e)
 {
-    if (! selectable) return;
     const int r = rowAt (e.getPosition());
-    if (r >= 0)
+    if (r < 0)
+        return;
+
+    // Copy the clicked value, e.g. to paste a frequency into an EQ.
+    const int c = columnAt (e.getPosition());
+    if (c >= 0 && c < rows[(size_t) r].size() && rows[(size_t) r][c].isNotEmpty())
+    {
+        juce::SystemClipboard::copyTextToClipboard (copyableValue (rows[(size_t) r][c]));
+        flash.trigger (r, c);
+    }
+
+    if (selectable)
     {
         selected = r;
         repaint();
@@ -376,10 +608,9 @@ void LedTable::mouseDown (const juce::MouseEvent& e)
 
 void LedTable::mouseMove (const juce::MouseEvent& e)
 {
-    if (! selectable) return;
     const int r = rowAt (e.getPosition());
-    if (r != hover) { hover = r; repaint(); }
     setMouseCursor (r >= 0 ? juce::MouseCursor::PointingHandCursor : juce::MouseCursor::NormalCursor);
+    if (selectable && r != hover) { hover = r; repaint(); }
 }
 
 void LedTable::mouseExit (const juce::MouseEvent&) { hover = -1; repaint(); }
@@ -425,6 +656,106 @@ void WarningPanel::paint (juce::Graphics& g)
         g.setColour (c.interpolatedWith (juce::Colours::white, 0.35f));
         g.setFont (ledFont (big ? 14.5f : 12.0f, false));
         g.drawFittedText (body, inner, juce::Justification::topLeft, big ? 5 : 3, 0.8f);
+    }
+}
+
+//==============================================================================
+HelpPanel::HelpPanel()
+{
+    setWantsKeyboardFocus (true);
+    closeButton.onClick = [this] { if (onClose) onClose(); };
+    addAndMakeVisible (closeButton);
+}
+
+void HelpPanel::setContent (const juce::String& t, const juce::String& text)
+{
+    title = t;
+    columns.clear();
+    for (auto rest = text;; rest = rest.fromFirstOccurrenceOf ("\n===\n", false, false))
+    {
+        columns.add (rest.upToFirstOccurrenceOf ("\n===\n", false, false));
+        if (! rest.contains ("\n===\n"))
+            break;
+    }
+    repaint();
+}
+
+bool HelpPanel::keyPressed (const juce::KeyPress& k)
+{
+    if (k == juce::KeyPress::escapeKey)
+    {
+        if (onClose) onClose();
+        return true;
+    }
+    return false;
+}
+
+void HelpPanel::resized()
+{
+    closeButton.setBounds (getLocalBounds().reduced (14).removeFromTop (26).removeFromRight (80));
+}
+
+void HelpPanel::paint (juce::Graphics& g)
+{
+    auto r = getLocalBounds().toFloat();
+    g.setColour (col::panelDark);
+    g.fillRoundedRectangle (r, 6.0f);
+    g.setColour (col::ledBlue.withAlpha (0.7f));
+    g.drawRoundedRectangle (r.reduced (1.0f), 6.0f, 1.5f);
+
+    auto area = getLocalBounds().reduced (20, 14);
+    auto top = area.removeFromTop (26);
+    g.setColour (col::ledBlue);
+    g.setFont (labelFont (15.0f));
+    g.drawText ("HOW TO USE:  " + title.toUpperCase(), top, juce::Justification::centredLeft);
+    area.removeFromTop (10);
+
+    if (footer.isNotEmpty())
+    {
+        auto foot = area.removeFromBottom (36);
+        g.setColour (col::silkDim.withAlpha (0.3f));
+        g.fillRect (foot.removeFromTop (1));
+        g.setColour (col::silkDim);
+        g.setFont (labelFont (12.0f, false));
+        g.drawFittedText (footer, foot.withTrimmedTop (5), juce::Justification::topLeft, 2, 1.0f);
+        area.removeFromBottom (6);
+    }
+
+    const int n = juce::jmax (1, columns.size());
+    const int gap = 30;
+    const int colW = (area.getWidth() - gap * (n - 1)) / n;
+    for (int c = 0; c < columns.size(); ++c)
+    {
+        juce::AttributedString as;
+        as.setWordWrap (juce::AttributedString::byWord);
+        as.setLineSpacing (2.0f);
+        const auto body = col::silkscreen.withAlpha (0.88f);
+        for (auto line : juce::StringArray::fromLines (columns[c]))
+        {
+            if (line.startsWith ("# "))
+            {
+                as.append ("\n", labelFont (6.0f, false), body);
+                as.append (line.substring (2).toUpperCase() + "\n", labelFont (13.0f), col::capYellow);
+            }
+            else if (line.startsWith ("- ") && line.contains (": "))
+            {
+                as.append (line.substring (2).upToFirstOccurrenceOf (": ", true, false), labelFont (14.0f), col::silkscreen);
+                as.append (line.fromFirstOccurrenceOf (": ", false, false) + "\n", labelFont (14.0f, false), body);
+            }
+            else
+            {
+                as.append (line + "\n", labelFont (14.0f, false), body);
+            }
+        }
+        juce::TextLayout layout;
+        layout.createLayout (as, (float) colW);
+        auto colArea = area.withX (area.getX() + c * (colW + gap)).withWidth (colW);
+        layout.draw (g, colArea.toFloat());
+        if (c > 0)
+        {
+            g.setColour (col::silkDim.withAlpha (0.3f));
+            g.fillRect (colArea.getX() - gap / 2, colArea.getY(), 1, colArea.getHeight());
+        }
     }
 }
 

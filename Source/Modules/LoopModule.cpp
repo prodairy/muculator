@@ -26,10 +26,13 @@ LoopModule::LoopModule (ModuleContext& c) : ModuleBase ("loop", "Loop / Bar Leng
 
     for (auto* comp : std::initializer_list<juce::Component*> { &bars, &beats, &rate, &beatUnit, &hostRate, &out, &table })
         addAndMakeVisible (comp);
-    for (auto* f : { &bars, &beats, &rate })
+    for (auto* f : { &bars, &beats })
         f->onChange = [this] { refresh(); };
-    hostRate.onClick = [this] { rate.setText (juce::String (ctx.hostSampleRate(), 0)); refresh(); };
-    hostRate.setTooltip ("Use the host / audio device sample rate");
+    // Typing a rate stops following the host; HOST SR (lit) follows it again.
+    rate.onChange = [this] { hostRate.setToggleState (false, juce::dontSendNotification); state().setProperty ("rateHost", false, nullptr); refresh(); };
+    hostRate.setToggleState ((bool) s.getProperty ("rateHost", true), juce::dontSendNotification);
+    hostRate.onClick = [this] { state().setProperty ("rateHost", hostRate.getToggleState(), nullptr); refresh(); };
+    hostRate.setTooltip ("Lit: follow the host / audio device sample rate");
 
     out.setLineHeight (26.0f);
     table.setColumns ({ "BARS", "MS", "SECONDS", "SAMPLES", "M:SS.cc" }, { 0.55f, 1.3f, 1.0f, 1.4f, 1.25f });
@@ -38,6 +41,9 @@ LoopModule::LoopModule (ModuleContext& c) : ModuleBase ("loop", "Loop / Bar Leng
 
 void LoopModule::refresh()
 {
+    if (hostRate.getToggleState())
+        rate.setText (juce::String (ctx.hostSampleRate(), 0));
+
     Validator v;
     const auto b = bpm();
     v.add (b);
@@ -116,4 +122,23 @@ void LoopModule::layoutContent (juce::Rectangle<int> r)
 
     out.setBounds (outArea.reduced (8).withTrimmedTop (22));
     table.setBounds (tableArea.reduced (8).withTrimmedTop (22));
+}
+
+juce::String LoopModule::helpText() const
+{
+    return R"(# What it does
+Turns bars and a time signature into an exact length in milliseconds, seconds and samples, so loops and edits stay on the grid.
+# How to use
+1. Enter the number of bars and the beats per bar, then pick the beat unit (4 = quarter notes, 8 = eighth notes).
+2. HOST SR (lit) uses the session sample rate; type a rate to use another one.
+3. Read the length. The table lists common bar counts; click a value to copy it.
+A red line means the sample count is not a whole number, so the loop will drift unless you trim it.
+# Example
+4 bars of 4/4 at 120 BPM = 8000 ms = 384000 samples at 48 kHz.
+===
+# Terms
+- TIME SIGNATURE: beats per bar / beat unit, for example 4/4 or 6/8.
+- BAR: one measure of the time signature.
+- SAMPLE-ACCURATE: a whole number of samples, so the loop repeats without drifting.
+- M:SS.cc: minutes, seconds and hundredths of a second.)";
 }

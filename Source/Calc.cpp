@@ -86,51 +86,52 @@ const std::vector<int>& delayDenominators()
 }
 
 //==============================================================================
-double midiToFreq (double midi) { return kA4Hz * std::pow (2.0, (midi - kA4Midi) / 12.0); }
-double freqToMidi (double hz)   { return kA4Midi + 12.0 * std::log2 (hz / kA4Hz); }
+double midiToFreq (double midi, double a4) { return a4 * std::pow (2.0, (midi - kA4Midi) / 12.0); }
+double freqToMidi (double hz, double a4)   { return kA4Midi + 12.0 * std::log2 (hz / a4); }
 
-std::string pitchClassName (int pc)
+std::string pitchClassName (int pc, bool flats)
 {
-    static const char* names[] = { "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B" };
-    return names[((pc % 12) + 12) % 12];
+    static const char* sharpNames[] = { "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B" };
+    static const char* flatNames[]  = { "C", "Db", "D", "Eb", "E", "F", "Gb", "G", "Ab", "A", "Bb", "B" };
+    return (flats ? flatNames : sharpNames)[((pc % 12) + 12) % 12];
 }
 
-std::string noteName (int midi)
+std::string noteName (int midi, bool flats)
 {
     const int octave = (int) std::floor (midi / 12.0) - 1;
-    return pitchClassName (midi) + std::to_string (octave);
+    return pitchClassName (midi, flats) + std::to_string (octave);
 }
 
 int noteToMidi (int pitchClass, int octave) { return (octave + 1) * 12 + pitchClass; }
 
-NoteInfo analyse (double hz)
+NoteInfo analyse (double hz, double a4)
 {
     NoteInfo n;
     n.freq        = hz;
-    n.exactMidi   = freqToMidi (hz);
+    n.exactMidi   = freqToMidi (hz, a4);
     n.nearestMidi = (int) std::lround (n.exactMidi);
-    n.nearestFreq = midiToFreq (n.nearestMidi);
+    n.nearestFreq = midiToFreq (n.nearestMidi, a4);
     n.cents       = (n.exactMidi - n.nearestMidi) * 100.0;
     return n;
 }
 
-TransposeResult transpose (double sourceHz, double semitones, double cents)
+TransposeResult transpose (double sourceHz, double semitones, double cents, double a4)
 {
     TransposeResult r;
     r.sourceFreq = sourceHz;
     r.targetFreq = sourceHz * std::pow (2.0, (semitones + cents / 100.0) / 12.0);
-    r.target     = analyse (r.targetFreq);
+    r.target     = analyse (r.targetFreq, a4);
     return r;
 }
 
-StretchResult stretch (double oldBpm, double oldHz, double newBpm, double thresholdCents)
+StretchResult stretch (double oldBpm, double oldHz, double newBpm, double thresholdCents, double a4)
 {
     StretchResult r;
     r.ratio     = newBpm / oldBpm;
     r.semitones = 12.0 * std::log2 (r.ratio);
     r.oldFreq   = oldHz;
     r.newFreq   = oldHz * r.ratio;
-    r.note      = analyse (r.newFreq);
+    r.note      = analyse (r.newFreq, a4);
 
     // Compare against the value as displayed (0.1 ct) so the warning never contradicts the readout.
     const double shownCents = std::round (std::abs (r.note.cents) * 10.0) / 10.0;
@@ -139,24 +140,38 @@ StretchResult stretch (double oldBpm, double oldHz, double newBpm, double thresh
     if (r.note.cents >= 0) { r.lowerMidi = r.note.nearestMidi;     r.upperMidi = r.note.nearestMidi + 1; }
     else                   { r.lowerMidi = r.note.nearestMidi - 1; r.upperMidi = r.note.nearestMidi; }
 
-    const auto bpmFor = [&] (int midi) { return oldBpm * midiToFreq (midi) / oldHz; };
+    const auto bpmFor = [&] (int midi) { return oldBpm * midiToFreq (midi, a4) / oldHz; };
     r.bpmForNearest = bpmFor (r.note.nearestMidi);
     r.bpmForLower   = bpmFor (r.lowerMidi);
     r.bpmForUpper   = bpmFor (r.upperMidi);
     return r;
 }
 
-std::vector<Harmonic> harmonics (double fundamentalHz, int count, double maxHz)
+std::vector<Harmonic> harmonics (double fundamentalHz, int count, HarmonicSet set, double a4, double maxHz)
 {
     std::vector<Harmonic> out;
-    for (int n = 1; n <= count; ++n)
+    for (int n = 1; (int) out.size() < count; ++n)
     {
+        if ((set == HarmonicSet::Odd && n % 2 == 0) || (set == HarmonicSet::Even && n % 2 == 1))
+            continue;
         const double f = fundamentalHz * n;
         if (f > maxHz)
             break;
-        out.push_back ({ n, f, analyse (f) });
+        out.push_back ({ n, f, analyse (f, a4) });
     }
     return out;
+}
+
+double harmonicLevel (Waveform w, int n)
+{
+    if (n < 1 || (w != Waveform::Saw && n % 2 == 0))
+        return 0.0;
+    return w == Waveform::Triangle ? 1.0 / ((double) n * n) : 1.0 / n;
+}
+
+HarmonicSet harmonicSetFor (Waveform w)
+{
+    return w == Waveform::Saw ? HarmonicSet::All : HarmonicSet::Odd;
 }
 
 //==============================================================================

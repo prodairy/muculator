@@ -57,12 +57,25 @@ ConverterModule::ConverterModule (ModuleContext& c) : ModuleBase ("convert", "Co
     tMs.onChange       = [this] { updateTime (Src::A); publishErrors(); };
     tHz.onChange       = [this] { updateTime (Src::B); publishErrors(); };
     tSamples.onChange  = [this] { updateTime (Src::C); publishErrors(); };
-    tRate.onChange     = [this] { updateTime (Src::None); publishErrors(); };
+    tRate.onChange     = [this]
+    {
+        // Typing a rate stops following the host; HOST SR (lit) follows it again.
+        tHostRate.setToggleState (false, juce::dontSendNotification);
+        state().setProperty ("tRateHost", false, nullptr);
+        updateTime (Src::None);
+        publishErrors();
+    };
     dMetres.onChange   = [this] { updateDistance (Src::A); publishErrors(); };
     dMs.onChange       = [this] { updateDistance (Src::B); publishErrors(); };
     dTemp.onChange     = [this] { updateDistance (Src::None); publishErrors(); };
-    tHostRate.onClick  = [this] { tRate.setText (clean (ctx.hostSampleRate(), 0)); updateTime (Src::None); publishErrors(); };
-    tHostRate.setTooltip ("Use the host / audio device sample rate");
+    tHostRate.setToggleState ((bool) s.getProperty ("tRateHost", true), juce::dontSendNotification);
+    tHostRate.onClick  = [this]
+    {
+        state().setProperty ("tRateHost", tHostRate.getToggleState(), nullptr);
+        updateTime (Src::None);
+        publishErrors();
+    };
+    tHostRate.setTooltip ("Lit: follow the host / audio device sample rate");
 
     for (auto* r : { &gainOut, &eqOut, &tOut, &dOut })
         r->setLineHeight (20.0f);
@@ -76,8 +89,9 @@ ConverterModule::ConverterModule (ModuleContext& c) : ModuleBase ("convert", "Co
 
 void ConverterModule::refresh()
 {
-    // Only the time panel depends on BPM (note-value hint); keep other panels as typed.
+    // Time and distance depend on BPM / sample rate; keep the other panels as typed.
     updateTime (Src::None);
+    updateDistance (Src::None);
     publishErrors();
 }
 
@@ -153,6 +167,9 @@ void ConverterModule::updateEq (Src src)
 
 void ConverterModule::updateTime (Src src)
 {
+    if (tHostRate.getToggleState())
+        tRate.setText (clean (ctx.hostSampleRate(), 0));
+
     Validator v;
     const auto sr = v.num (tRate, "Sample rate", 1000, 768000);
     for (auto* f : { &tMs, &tHz, &tSamples }) f->setInvalid (false);
@@ -271,4 +288,25 @@ void ConverterModule::layoutContent (juce::Rectangle<int> r)
     tRate.setBounds (srRow);
     outArea.removeFromTop (6);
     tOut.setBounds (outArea);
+}
+
+juce::String ConverterModule::helpText() const
+{
+    return R"(# What it does
+Four converters in one place. Type in any field of a panel and the other fields of that panel follow.
+# How to use
+- dB <> LINEAR GAIN: a level change as a multiplier.
+- EQ: Q <> bandwidth in octaves, with the -3 dB edges in Hz.
+- ms <> Hz <> SAMPLES: times at a sample rate. HOST SR (lit) follows the session; typing a rate turns it off.
+- DISTANCE <> ms: how long sound takes to travel, for lining up mics and speakers.
+Click a value to copy it.
+# Example
+-6 dB = x0.501. Q 1.41 is about 1 octave. 10 ms = 480 samples at 48 kHz. A mic 3 m further away hears the source 8.7 ms later (20 C).
+===
+# Terms
+- dB: a ratio on a log scale. +6 dB is about twice the amplitude, +20 dB is ten times.
+- Q: how narrow an EQ band is. Higher Q = narrower band. Q 1.41 is about one octave wide.
+- BANDWIDTH: the width between the two -3 dB points, in octaves.
+- SAMPLE RATE: samples per second (44100, 48000, 96000...).
+- SPEED OF SOUND: about 343 m/s at 20 C, a little faster in warm air.)";
 }

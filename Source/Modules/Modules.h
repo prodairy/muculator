@@ -12,6 +12,7 @@ public:
 
 private:
     void layoutContent (juce::Rectangle<int>) override;
+    juce::String helpText() const override;
     ui::ButtonGroup styles;
     ui::LedTable table;
     ui::LedReadout room;
@@ -28,6 +29,7 @@ public:
 
 private:
     void layoutContent (juce::Rectangle<int>) override;
+    juce::String helpText() const override;
     ui::LedTable table;
     ui::LedReadout summary;
     juce::Rectangle<int> tableArea, summaryArea;
@@ -43,6 +45,7 @@ public:
 
 private:
     void layoutContent (juce::Rectangle<int>) override;
+    juce::String helpText() const override;
     ui::ButtonGroup sources;
     ui::LedReadout result;
     ui::LedTable releaseTable;
@@ -61,11 +64,15 @@ public:
 
 private:
     void layoutContent (juce::Rectangle<int>) override;
+    juce::String helpText() const override;
     void refreshTranspose (Validator&);
     void refreshStretch (Validator&);
     void refreshFreq (Validator&);
     void refreshHarmonics (Validator&);
     void updateVisibility();
+    juce::String noteText (int midi) const;
+    juce::String noteWithCents (const calc::NoteInfo&) const;
+
 
     ui::ButtonGroup tabs;
     int tab = 0;
@@ -88,10 +95,17 @@ private:
     ui::LedReadout fnOut;
 
     // harmonics
-    ui::ButtonGroup hmMode;
+    ui::ButtonGroup hmMode, hmSet, hmWave, hmCount;
     ui::NotePicker hmNote { "Fundamental note" };
     ui::LedField hmFreq { "Fundamental", "Hz" };
     ui::LedTable hmTable;
+
+    // tuning (shared by every tab)
+    ui::LedField a4Field { "A4 reference", "Hz" };
+    ui::IllumButton a4Presets { "...", ui::col::capWhite, false };
+    ui::ButtonGroup spelling;
+    double a4 = calc::kA4Hz;
+    bool flats = false;
 
     juce::Rectangle<int> inputArea, outputArea;
 };
@@ -106,6 +120,7 @@ public:
 
 private:
     void layoutContent (juce::Rectangle<int>) override;
+    juce::String helpText() const override;
     enum class Src { None, A, B, C };
     void updateGain (Src);
     void updateEq (Src);
@@ -118,7 +133,7 @@ private:
     ui::LedField eqCentre { "Centre", "Hz" }, eqQ { "Q" }, eqOct { "Bandwidth", "oct" };
     ui::LedReadout eqOut;
     ui::LedField tMs { "Time", "ms" }, tHz { "Frequency", "Hz" }, tSamples { "Samples", "smp" }, tRate { "Sample rate", "Hz" };
-    ui::IllumButton tHostRate { "HOST SR", ui::col::capGreen, false };
+    ui::IllumButton tHostRate { "HOST SR", ui::col::capGreen, true };
     ui::LedReadout tOut;
     ui::LedField dMetres { "Distance", "m" }, dMs { "Delay", "ms" }, dTemp { "Air temp", "C" };
     ui::LedReadout dOut;
@@ -137,9 +152,10 @@ public:
 
 private:
     void layoutContent (juce::Rectangle<int>) override;
+    juce::String helpText() const override;
     ui::LedField bars { "Bars" }, beats { "Beats / bar" }, rate { "Sample rate", "Hz" };
     juce::ComboBox beatUnit;
-    ui::IllumButton hostRate { "HOST SR", ui::col::capGreen, false };
+    ui::IllumButton hostRate { "HOST SR", ui::col::capGreen, true };
     ui::LedReadout out;
     ui::LedTable table;
     juce::Rectangle<int> inputArea, outArea, tableArea;

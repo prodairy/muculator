@@ -38,6 +38,8 @@ public:
     /** 0 when the host has not reported a tempo. */
     double getHostBpm() const noexcept { return hostBpm.load(); }
     double getCurrentSampleRate() const noexcept { return currentSampleRate.load(); }
+    /** Milliseconds since the host last called processBlock (huge if it never did). */
+    juce::uint32 msSinceLastBlock() const noexcept { return juce::Time::getMillisecondCounter() - lastBlockMs.load(); }
 
     juce::ValueTree state { "MUCULATOR" };
 
@@ -46,6 +48,7 @@ private:
 
     std::atomic<double> hostBpm { 0.0 };
     std::atomic<double> currentSampleRate { 48000.0 };
+    std::atomic<juce::uint32> lastBlockMs { juce::Time::getMillisecondCounter() - 0x7fffffffu };
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (MuculatorProcessor)
 };

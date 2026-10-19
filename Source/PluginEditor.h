@@ -14,6 +14,7 @@ public:
 
     void paint (juce::Graphics&) override;
     void resized() override;
+    bool keyPressed (const juce::KeyPress&) override;
 
     void selectModule (int index);
     ModuleBase* getModule (int index) { return modules[(size_t) index].get(); }
@@ -32,10 +33,15 @@ private:
     void valueTreePropertyChanged (juce::ValueTree&, const juce::Identifier&) override;
     void buildModules();
     void bpmChanged();
-    void nudgeBpm (double delta);
+    /** Moves the BPM by whole steps of stepSize, landing on the step grid (120.5 + 1 -> 121). */
+    void nudgeBpm (int steps, double stepSize);
     void tap();
     void setChained (bool);
     void updateTopBar();
+    /** Copies the host tempo into the visible module's BPM when HOST SYNC is on. */
+    void applyHostTempo (bool force);
+    /** The host has not called processBlock for a second (paused track, or never started). */
+    bool hostPaused() const;
     const juce::String& currentId() const;
 
     MuculatorProcessor& proc;
@@ -54,6 +60,10 @@ private:
     int current = 0;
     std::vector<double> tapTimes;
     double lastHostBpm = -1;
+    bool wasPaused = false;
+    /** Logic pauses plugins on tracks that are not playing; the hints name the fix for it. */
+    const bool inLogic = juce::PluginHostType().isLogic();
+    double lastSampleRate = 0;
     juce::Rectangle<int> topBar, logoArea, hostArea, moduleStrip, contentArea, footer;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (MuculatorEditor)

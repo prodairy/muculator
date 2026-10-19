@@ -29,6 +29,7 @@ void MuculatorProcessor::readHost (juce::AudioBuffer<Sample>& buffer)
     for (int ch = getTotalNumInputChannels(); ch < getTotalNumOutputChannels(); ++ch)
         buffer.clear (ch, 0, buffer.getNumSamples());
 
+    lastBlockMs = juce::Time::getMillisecondCounter();
     if (auto* ph = getPlayHead())
         if (auto pos = ph->getPosition())
             if (auto bpm = pos->getBpm(); bpm.hasValue() && *bpm > 0)

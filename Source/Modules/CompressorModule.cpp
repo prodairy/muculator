@@ -111,3 +111,22 @@ void CompressorModule::layoutContent (juce::Rectangle<int> r)
     result.setBounds (res);
     releaseTable.setBounds (tableArea.reduced (8).withTrimmedTop (22));
 }
+
+juce::String CompressorModule::helpText() const
+{
+    return R"(# What it does
+Suggests compressor attack and release. Attack depends on the sound source; release is tied to the tempo, so gain reduction recovers in time with the groove.
+# How to use
+1. Pick the source you are compressing (kick, vocal, drum bus...).
+2. Set the attack from ATTACK (source); the range below it is a safe window.
+3. Set the release from RELEASE (BPM), or pick another note value in the table.
+4. Red rows are too short for this source and can distort. Use a longer value or the compressor's auto-release.
+# Example
+Kick at 120 BPM: attack 20 ms (range 15 - 30 ms), release 1/8 = 250 ms.
+===
+# Terms
+- ATTACK: how fast the compressor reacts once the level goes over the threshold. A slower attack lets the transient (the click or hit) through.
+- RELEASE: how fast it lets go after the level drops. Timed to the beat it breathes with the music; too long and it never recovers, too short and it pumps or distorts.
+- GAIN REDUCTION (GR): how many dB the compressor turns the signal down.
+- AUTO-RELEASE: a release that adapts to the material, offered by many compressors.)";
+}
