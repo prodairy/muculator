@@ -21,8 +21,8 @@ PitchModule::PitchModule (ModuleContext& c)
       hmSet ({ "ALL", "ODD", "EVEN" }, Cap::White, 304, false),
       hmWave ({ "OFF", "SAW", "SQUARE", "TRI" }, Cap::Yellow, 305, false),
       hmCount ({ "16", "32", "64" }, Cap::White, 306, false),
-      spelling ({ "#", "b" }, Cap::White, 307, false),
-      fmMode ({ "NOTE", "FREQ" }, Cap::Green, 310, false)
+      fmMode ({ "NOTE", "FREQ" }, Cap::Green, 310, false),
+      spelling ({ "#", "b" }, Cap::White, 307, false)
 {
     auto s = state();
     a4Field.bind (s, "a4", "440");

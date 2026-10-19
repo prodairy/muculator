@@ -194,7 +194,7 @@ void LoopModule::refreshBpm (Validator& v, double nBars, double nBeats, double u
     };
 
     const double found = calc::loopBpm (*ms, nBars, nBeats, unit);
-    const juce::String sig = juce::String (nBars, nBars == std::floor (nBars) ? 0 : 2) + " bars of "
+    const juce::String sig = juce::String (nBars, std::abs (nBars - std::round (nBars)) < 1e-9 ? 0 : 2) + " bars of "
                            + juce::String (nBeats, 0) + "/" + juce::String ((int) unit);
     if (! inRange (found))
     {
