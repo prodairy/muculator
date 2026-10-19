@@ -31,8 +31,9 @@ private:
     void layoutContent (juce::Rectangle<int>) override;
     juce::String helpText() const override;
     ui::LedTable table;
-    ui::LedReadout summary;
-    juce::Rectangle<int> tableArea, summaryArea;
+    ui::LedReadout summary, swingOut;
+    ui::LedField swingField { "Swing", "%" };
+    juce::Rectangle<int> tableArea, summaryArea, swingArea;
 };
 
 //==============================================================================
