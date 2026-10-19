@@ -43,10 +43,15 @@ ConverterModule::ConverterModule (ModuleContext& c) : ModuleBase ("convert", "Co
     dMetres.bind (s, "dMetres", "3");
     dMs.bind (s, "dMs", "");
     dTemp.bind (s, "dTemp", "20");
+    fsDuration.bind (s, "fsDuration", "180");
+    fsRate.bind (s, "fsRate", clean (ctx.hostSampleRate(), 0));
+    fsChannels.bind (s, "fsChannels", "2");
+    fsBits.setSelected (juce::jlimit (0, 2, (int) s.getProperty ("fsBits", 1)), false);
 
     for (auto* comp : std::initializer_list<juce::Component*> {
              &dbField, &gainField, &gainOut, &eqCentre, &eqQ, &eqOct, &eqOut,
-             &tMs, &tHz, &tSamples, &tRate, &tHostRate, &tOut, &dMetres, &dMs, &dTemp, &dOut })
+             &tMs, &tHz, &tSamples, &tRate, &tHostRate, &tOut, &dMetres, &dMs, &dTemp, &dOut,
+             &fsDuration, &fsRate, &fsChannels, &fsBits, &fsOut })
         addAndMakeVisible (comp);
 
     dbField.onChange   = [this] { updateGain (Src::A); publishErrors(); };
@@ -76,15 +81,21 @@ ConverterModule::ConverterModule (ModuleContext& c) : ModuleBase ("convert", "Co
         publishErrors();
     };
     tHostRate.setTooltip ("Lit: follow the host / audio device sample rate");
+    for (auto* f : { &fsDuration, &fsRate, &fsChannels })
+        f->onChange = [this] { updateFileSize(); publishErrors(); };
+    fsBits.onSelect = [this] (int i) { state().setProperty ("fsBits", i, nullptr); updateFileSize(); publishErrors(); };
+    fsBits.setTooltip ("Bit depth: 16 (CD), 24 (recording), 32 (float)");
+    fsDuration.setTooltip ("Length of the audio in seconds (3:00 = 180 s)");
     tHostRate.setVisible (ctx.hasHost());
 
-    for (auto* r : { &gainOut, &eqOut, &tOut, &dOut })
+    for (auto* r : { &gainOut, &eqOut, &tOut, &dOut, &fsOut })
         r->setLineHeight (20.0f);
 
     updateGain (Src::A);
     updateEq (Src::B);
     updateTime (Src::A);
     updateDistance (Src::A);
+    updateFileSize();
     publishErrors();
 }
 
@@ -99,7 +110,7 @@ void ConverterModule::refresh()
 void ConverterModule::publishErrors()
 {
     juce::StringArray all;
-    all.addArray (gainErr); all.addArray (eqErr); all.addArray (timeErr); all.addArray (distErr);
+    all.addArray (gainErr); all.addArray (eqErr); all.addArray (timeErr); all.addArray (distErr); all.addArray (sizeErr);
     showErrors (all);
 }
 
@@ -246,13 +257,36 @@ void ConverterModule::updateDistance (Src src)
     });
 }
 
+void ConverterModule::updateFileSize()
+{
+    Validator v;
+    const auto seconds = v.num (fsDuration, "Duration", 0.001, 1e7);
+    const auto sr = v.num (fsRate, "Sample rate", 1000, 768000);
+    const auto ch = v.num (fsChannels, "Channels", 1, 64);
+    sizeErr = v.errors;
+    if (! v.ok()) { fsOut.setLines ({ { "", "--", skin().ledRed } }); return; }
+
+    static const int depths[] = { 16, 24, 32 };
+    const int bits = depths[juce::jlimit (0, 2, fsBits.getSelected())];
+    const int channels = (int) std::round (*ch);
+    const double bytes = calc::audioBytes (*seconds, *sr, bits, channels);
+    const double perMinute = calc::audioBytes (60.0, *sr, bits, channels);
+    fsOut.setLines ({
+        { "SIZE", str (calc::fmt (bytes / 1e6, 2)) + " MB", skin().ledGreen },
+        { "BINARY", str (calc::fmt (bytes / 1048576.0, 2)) + " MiB" },
+        { "PER MINUTE", str (calc::fmt (perMinute / 1e6, 2)) + " MB" },
+        { "DATA RATE", str (calc::fmt (perMinute / 60.0 * 8.0 / 1000.0, 0)) + " kbit/s" },
+    });
+}
+
 void ConverterModule::paint (juce::Graphics& g)
 {
     ModuleBase::paint (g);
     drawSection (g, cells[0], "dB  <>  linear gain");
     drawSection (g, cells[1], "EQ  Q  <>  octaves  <>  Hz");
     drawSection (g, cells[2], "ms  <>  Hz  <>  samples");
-    drawSection (g, cells[3], "Distance  <>  ms  (mic / speaker alignment)");
+    drawSection (g, cells[3], "Distance  <>  ms  (mic / speaker)");
+    drawSection (g, cells[4], "Audio file size (WAV / AIFF)");
 }
 
 void ConverterModule::layoutContent (juce::Rectangle<int> r)
@@ -262,9 +296,12 @@ void ConverterModule::layoutContent (juce::Rectangle<int> r)
     cells[0] = top.removeFromLeft ((top.getWidth() - 10) / 2);
     top.removeFromLeft (10);
     cells[1] = top;
-    cells[2] = r.removeFromLeft ((r.getWidth() - 10) / 2);
+    const int third = (r.getWidth() - 20) / 3;
+    cells[2] = r.removeFromLeft (third);
     r.removeFromLeft (10);
-    cells[3] = r;
+    cells[3] = r.removeFromLeft (third);
+    r.removeFromLeft (10);
+    cells[4] = r;
 
     const auto layout = [] (juce::Rectangle<int> cell, std::initializer_list<juce::Component*> fields, LedReadout& out)
     {
@@ -280,6 +317,13 @@ void ConverterModule::layoutContent (juce::Rectangle<int> r)
     layout (cells[1], { &eqCentre, &eqQ, &eqOct }, eqOut);
     layout (cells[2], { &tMs, &tHz, &tSamples }, tOut);
     layout (cells[3], { &dMetres, &dMs, &dTemp }, dOut);
+    layout (cells[4], { &fsDuration, &fsRate, &fsChannels }, fsOut);
+    {
+        auto a = fsOut.getBounds();
+        fsBits.setBounds (a.removeFromTop (28));
+        a.removeFromTop (6);
+        fsOut.setBounds (a);
+    }
 
     // sample rate row lives inside the time readout area's top
     auto outArea = tOut.getBounds();
@@ -297,21 +341,24 @@ void ConverterModule::layoutContent (juce::Rectangle<int> r)
 juce::String ConverterModule::helpText() const
 {
     return R"(# What it does
-Four converters in one place. Type in any field of a panel and the other fields of that panel follow.
+Five converters in one place. Type in any field of a panel and the other fields of that panel follow; the file size panel works out the size of an audio file.
 # How to use
 - dB <> LINEAR GAIN: a level change as a multiplier.
 - EQ: Q <> bandwidth in octaves, with the -3 dB edges in Hz.
 - ms <> Hz <> SAMPLES: times at a sample rate. )" + juce::String (ctx.hasHost() ? "HOST SR (lit) follows the session; typing a rate turns it off."
                                                                               : "Type the sample rate of your project.") + R"(
 - DISTANCE <> ms: how long sound takes to travel, for lining up mics and speakers.
+- FILE SIZE: how big uncompressed audio gets, from its duration in seconds, sample rate, channels and bit depth.
 Click a value to copy it.
 # Example
--6 dB = x0.501. Q 1.41 is about 1 octave. 10 ms = 480 samples at 48 kHz. A mic 3 m further away hears the source 8.7 ms later (20 C).
+-6 dB = x0.501. Q 1.41 is about 1 octave. 10 ms = 480 samples at 48 kHz. A mic 3 m further away hears the source 8.7 ms later (20 C). A 3-minute stereo song at 48 kHz / 24 bit is 51.84 MB.
 ===
 # Terms
 - dB: a ratio on a log scale. +6 dB is about twice the amplitude, +20 dB is ten times.
 - Q: how narrow an EQ band is. Higher Q = narrower band. Q 1.41 is about one octave wide.
 - BANDWIDTH: the width between the two -3 dB points, in octaves.
 - SAMPLE RATE: samples per second (44100, 48000, 96000...).
-- SPEED OF SOUND: about 343 m/s at 20 C, a little faster in warm air.)";
+- SPEED OF SOUND: about 343 m/s at 20 C, a little faster in warm air.
+- BIT DEPTH: bits per sample. 16 = CD, 24 = recording, 32 = floating point.
+- MB / MiB: 1 MB = 1,000,000 bytes; 1 MiB = 1,048,576 bytes (some systems call this MB). The file header adds a few bytes.)";
 }

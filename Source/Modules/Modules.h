@@ -160,6 +160,7 @@ private:
     void updateEq (Src);
     void updateTime (Src);
     void updateDistance (Src);
+    void updateFileSize();
     void publishErrors();
 
     ui::LedField dbField { "Level", "dB" }, gainField { "Linear gain", "x" };
@@ -171,9 +172,12 @@ private:
     ui::LedReadout tOut;
     ui::LedField dMetres { "Distance", "m" }, dMs { "Delay", "ms" }, dTemp { "Air temp", "C" };
     ui::LedReadout dOut;
+    ui::LedField fsDuration { "Duration", "s" }, fsRate { "Sample rate", "Hz" }, fsChannels { "Channels" };
+    ui::ButtonGroup fsBits { { "16 BIT", "24 BIT", "32 BIT" }, ui::Cap::White, 501, false };
+    ui::LedReadout fsOut;
 
-    juce::StringArray gainErr, eqErr, timeErr, distErr;
-    juce::Rectangle<int> cells[4];
+    juce::StringArray gainErr, eqErr, timeErr, distErr, sizeErr;
+    juce::Rectangle<int> cells[5];
 };
 
 //==============================================================================
