@@ -30,11 +30,11 @@ Muculator puts all of that inside your DAW, styled like a console channel strip:
 | Module | What it tells you |
 |---|---|
 | **Reverb** | Pre-delay, decay and total time for Small Room, Room, Large Room, Plate and Hall, synced to BPM. The recommended row is highlighted, you can click any row, and it shows an estimated room size (Sabine). |
-| **Delay** | Every note value from 1/1 to 1/512: normal, dotted and triplet, in **ms and Hz**. |
+| **Delay** | Every note value from 1/1 to 1/512: normal, dotted and triplet, in **ms and Hz**. Swing timing for 1/8 and 1/16 (50 to 75 %) and tempo-synced Haas delays (10 to 35 ms). |
 | **Compressor** | Attack based on the source (kick, snare, bass, vocal, bus…) and release based on the tempo, with warnings when the release gets too short. |
-| **Pitch** | **Transpose** (note ± semitones/cents), **Stretch**, **Frequency → Note**, **Harmonic series** (all / odd / even, saw / square / triangle levels, 16 to 64 harmonics). Adjustable A4 reference (440 Hz by default, 432 / 442 / 443 or any value), always on screen. Notes with sharps or flats. |
-| **Converters** | dB ↔ linear gain · EQ Q ↔ octaves ↔ Hz · ms ↔ Hz ↔ samples · distance ↔ ms (mic/speaker alignment). |
-| **Loop** | Bars + time signature → ms, seconds and exact sample count. |
+| **Pitch** | **Transpose** (note ± semitones/cents), **Stretch** (varispeed or time-stretch, with fit to scale), **Frequency → Note**, **Harmonic series** (all / odd / even, saw / square / triangle levels, 16 to 64 harmonics), **Frequency map** (where common instruments sit, for EQ). Adjustable A4 reference (440 Hz by default, 432 / 442 / 443 or any value), always on screen. Notes with sharps or flats. |
+| **Converters** | dB ↔ linear gain · EQ Q ↔ octaves ↔ Hz · ms ↔ Hz ↔ samples · distance ↔ ms (mic/speaker alignment) · audio file size (duration, sample rate, bit depth, channels → MB). |
+| **Loop** | Bars + time signature → ms, seconds and exact sample count. **Length → BPM:** the tempo of a loop from its length (seconds, ms or samples) and bar count. |
 
 ### The Stretch module
 
@@ -46,6 +46,10 @@ Muculator gives you the new note and frequency. If the result lands **between tw
 - **which BPM to use** so the sample lands exactly on a note.
 
 > Example: an A4 sample at 120 BPM played at 126 BPM → 462 Hz, −15.5 ct from A#4. Use **127.14 BPM** to land on A#4.
+
+**Fit to scale:** pick the key and scale of your song (major or minor) and Muculator lists the nearest tempos that land the sample exactly on a note of that scale.
+
+**Time-stretch mode:** if your DAW keeps the pitch (Warp, Flex Time), switch to **TIME-STRETCH**. You get the new length, the tempo change and the stretch ratio, with a warning when the stretch is large enough to be heard (above 10 %, and a quality warning above 25 %).
 
 ### Skins
 
@@ -120,7 +124,11 @@ Tests/                   unit tests + snapshot tool
 
 - 12-TET, A4 = 440 Hz by default (adjustable from 400 to 480 Hz), C4 = MIDI 60, notes written with sharps unless you pick flats.
 - Ideal waveform harmonics: saw 1/n (all), square 1/n (odd), triangle 1/n² (odd).
-- Stretch = varispeed (tape-style): pitch ratio = new BPM / old BPM.
+- Stretch = varispeed (tape-style): pitch ratio = new BPM / old BPM. Time-stretch keeps the pitch: new length = old length × old BPM / new BPM; up to 10 % tempo change is rated clean, above 25 % gets a quality warning.
+- Loop tempo = bars × beats per bar × (4 / beat unit) × 60 / length in seconds.
+- Swing: the first note of each pair takes the swing % of the pair (50 % = straight, 66.7 % = triplet shuffle).
+- File size = duration × sample rate × bit depth / 8 × channels (uncompressed PCM, header not counted).
+- The frequency map shows typical ranges from common EQ charts; real recordings vary.
 - Microtone warning when the shown deviation is ≥ 10 cents.
 - Reverb pre-delay is snapped to the 1/64 to 1/512 note closest to each style's typical value, and is never more than 25 % of the tail. Room size comes from Sabine's formula with 1.59 : 1.26 : 1 proportions.
 - Compressor suggestions are common starting points, not rules.
@@ -143,15 +151,15 @@ VST is a registered trademark of Steinberg Media Technologies GmbH.
 **Muculator**, müzik prodüktörleri için ücretsiz ve açık kaynak bir VST3 / AU / CLAP eklentisidir (tek başına açılan bir uygulaması da var). Sesi değiştirmez; stüdyodaki hesapları DAW'ın içinde, tempona kilitli olarak yapar.
 
 - **Reverb:** Tarza ve BPM'e göre pre-delay, decay ve toplam süre; önerilen satır işaretli; tahmini oda ölçüleri.
-- **Delay:** 1/1'den 1/512'ye kadar normal, noktalı ve triplet süreler (ms ve Hz).
+- **Delay:** 1/1'den 1/512'ye kadar normal, noktalı ve triplet süreler (ms ve Hz); 1/8 ve 1/16 için swing süreleri (%50-75) ve tempoya uyan Haas gecikmeleri (10-35 ms).
 - **Compressor:** Kaynağa göre attack, BPM'e göre release.
-- **Pitch:** Transpose, Stretch, frekanstan nota bulma, harmonik serisi (tümü / tek / çift, saw / square / triangle seviyeleri, 16-64 harmonik). A4 referansı ayarlanabilir (varsayılan 440 Hz) ve hep ekranda; notalar diyez ya da bemol yazılabilir.
+- **Pitch:** Transpose, Stretch (varispeed ya da time-stretch, gama oturtma ile), frekanstan nota bulma, enstrüman frekans haritası (EQ rehberi), harmonik serisi (tümü / tek / çift, saw / square / triangle seviyeleri, 16-64 harmonik). A4 referansı ayarlanabilir (varsayılan 440 Hz) ve hep ekranda; notalar diyez ya da bemol yazılabilir.
 - **Kolaylıklar:** Her modülde **?** yardım paneli; bir değere tıklayınca panoya kopyalanır; BPM ekranı sürükleyerek ya da tekerlekle değişir (Shift ile 0.1 adım); `T` tuşu TAP yapar.
-- **Converters:** dB ↔ gain, Q ↔ oktav ↔ Hz, ms ↔ Hz ↔ sample, mesafe ↔ ms.
-- **Loop:** Bar sayısından ms, saniye ve sample sayısı.
+- **Converters:** dB ↔ gain, Q ↔ oktav ↔ Hz, ms ↔ Hz ↔ sample, mesafe ↔ ms, ses dosyası boyutu (süre, sample rate, bit, kanal → MB).
+- **Loop:** Bar sayısından ms, saniye ve sample sayısı. Ters yönde de çalışır: loop'un uzunluğunu ve bar sayısını gir, BPM'ini bul.
 - **Skin'ler:** Üst bardaki **SKIN** düğmesiyle görünüm değişir: 5 stüdyo skin'i (Console, Pattern, Session, Modular, Studio Pro) ve Sanzo Wada'nın *A Dictionary of Color Combinations* kitabındaki renklerle yapılmış 5 sade, pastel skin (Seashell, Glaucous, Lavender, Lemon, Turquoise); her birinin bir de koyu (Dark) versiyonu var. Skin, `.muskin` uzantılı küçük bir metin dosyasıdır; kendin yapabilir ya da [skin rehberini](docs/SKINS.md) Claude'a verip istediğin görünümü anlatarak yaptırabilirsin.
 
-**Stretch:** Eski BPM'i, eski notayı ve yeni BPM'i girersin; yeni notayı ve frekansı verir. Sonuç iki notanın arasında kalırsa **MİKROTON UYARISI** gösterir ve notaya tam oturması için hangi BPM'i kullanman gerektiğini yazar.
+**Stretch:** Eski BPM'i, eski notayı ve yeni BPM'i girersin; yeni notayı ve frekansı verir. Sonuç iki notanın arasında kalırsa **MİKROTON UYARISI** gösterir ve notaya tam oturması için hangi BPM'i kullanman gerektiğini yazar. **Gama oturt:** şarkının tonunu ve gamını seç; sample'ı o gamdaki bir notaya tam oturtan en yakın BPM'leri listeler. Perde sabit kalsın istiyorsan **TIME-STRETCH** moduna geç: yeni uzunluğu, tempo değişimini ve oran çok büyükse kalite uyarısını gösterir.
 
 **Kurulum:** [Releases](../../releases/latest) sayfasından kendi sistemine uygun zip dosyasını indir, eklentiyi yukarıdaki klasöre kopyala ve DAW'da eklentileri yeniden tarat.
 
