@@ -50,9 +50,9 @@ Muculator gives you the new note and frequency. If the result lands **between tw
 ### Skins
 
 Click **SKIN** in the top bar to change the look. Ten skins are built in: five studio skins
-(**Console**, the default, **Pattern**, **Session**, **Modular**, **Studio Pro**) and five colour skins
-built from Sanzo Wada's *A Dictionary of Color Combinations* (**Indigo**, **Teal Grove**,
-**Violet Night**, **Harbor**, **Naples**). A skin is a small `.muskin` text file, so
+(**Console**, the default, **Pattern**, **Session**, **Modular**, **Studio Pro**) and five minimal pastel
+skins built from Sanzo Wada's *A Dictionary of Color Combinations* (**Seashell**, **Glaucous**,
+**Lavender**, **Lemon**, **Turquoise**). A skin is a small `.muskin` text file, so
 you can make your own, or ask Claude (or another AI assistant) to make one from a description.
 See the [skin guide](docs/SKINS.md).
 
@@ -145,7 +145,7 @@ VST is a registered trademark of Steinberg Media Technologies GmbH.
 - **Kolaylıklar:** Her modülde **?** yardım paneli; bir değere tıklayınca panoya kopyalanır; BPM ekranı sürükleyerek ya da tekerlekle değişir (Shift ile 0.1 adım); `T` tuşu TAP yapar.
 - **Converters:** dB ↔ gain, Q ↔ oktav ↔ Hz, ms ↔ Hz ↔ sample, mesafe ↔ ms.
 - **Loop:** Bar sayısından ms, saniye ve sample sayısı.
-- **Skin'ler:** Üst bardaki **SKIN** düğmesiyle görünüm değişir: 5 stüdyo skin'i (Console, Pattern, Session, Modular, Studio Pro) ve Sanzo Wada'nın *A Dictionary of Color Combinations* kitabındaki renklerle yapılmış 5 renkli skin (Indigo, Teal Grove, Violet Night, Harbor, Naples). Skin, `.muskin` uzantılı küçük bir metin dosyasıdır; kendin yapabilir ya da [skin rehberini](docs/SKINS.md) Claude'a verip istediğin görünümü anlatarak yaptırabilirsin.
+- **Skin'ler:** Üst bardaki **SKIN** düğmesiyle görünüm değişir: 5 stüdyo skin'i (Console, Pattern, Session, Modular, Studio Pro) ve Sanzo Wada'nın *A Dictionary of Color Combinations* kitabındaki renklerle yapılmış 5 sade, pastel skin (Seashell, Glaucous, Lavender, Lemon, Turquoise). Skin, `.muskin` uzantılı küçük bir metin dosyasıdır; kendin yapabilir ya da [skin rehberini](docs/SKINS.md) Claude'a verip istediğin görünümü anlatarak yaptırabilirsin.
 
 **Stretch:** Eski BPM'i, eski notayı ve yeni BPM'i girersin; yeni notayı ve frekansı verir. Sonuç iki notanın arasında kalırsa **MİKROTON UYARISI** gösterir ve notaya tam oturması için hangi BPM'i kullanman gerektiğini yazar.
 

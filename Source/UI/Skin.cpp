@@ -236,7 +236,7 @@ SkinManager::SkinManager()
 
 const juce::StringArray& SkinManager::colourSkinIds()
 {
-    static const juce::StringArray ids { "indigo", "teal-grove", "violet-night", "harbor", "naples" };
+    static const juce::StringArray ids { "seashell", "glaucous", "lavender", "lemon", "turquoise" };
     return ids;
 }
 

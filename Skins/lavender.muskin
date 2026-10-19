@@ -1,0 +1,46 @@
+{
+  "format": 1,
+  "name": "Lavender",
+  "author": "Muculator",
+  "description": "Grayish lavender, ivory buff and yellow orange (combination 235). Minimal pastel skin; colours from Sanzo Wada, A Dictionary of Color Combinations.",
+  "colors": {
+    "panel": "#f4f0f2",
+    "panelDark": "#e9e0e4",
+    "panelEdge": "#cfc0c7",
+    "recess": "#faf7f8",
+    "accent": "#c0a9b3",
+    "text": "#3d3540",
+    "textDim": "#85798a",
+    "highlight": "#b86e10",
+    "screen": "#f8f0df",
+    "screenEdge": "#e3d3b0",
+    "screenText": "#9a8a6a",
+    "ledRed": "#b5506a",
+    "ledAmber": "#b86e10",
+    "ledGreen": "#5b7d55",
+    "ledBlue": "#6a6aa0",
+    "capRed": "#e8b0bf",
+    "capYellow": "#f9cf8a",
+    "capGreen": "#c4d9b8",
+    "capBlue": "#c8c3e3",
+    "capWhite": "#d8c6ce",
+    "capOrange": "#fbbf72",
+    "buttonFace": "#fdfbfc",
+    "buttonText": "#3d3540",
+    "litText": "#3d3540"
+  },
+  "style": {
+    "buttons": "flat",
+    "texture": "flat",
+    "buttonCorner": 4,
+    "sectionCorner": 6,
+    "screenCorner": 4,
+    "accentStripe": 2,
+    "screws": false,
+    "screenGlare": false
+  },
+  "fonts": {
+    "label": "",
+    "led": ""
+  }
+}

@@ -17,16 +17,17 @@ your own as you like.
 | **Modular** | Modern modular studio: anthracite, one orange accent, rounded corners |
 | **Studio Pro** | Classic desktop studio: graphite, blue accent, soft gradients, glass buttons |
 
-**Colour skins**, built from the colour combinations in Sanzo Wada's *A Dictionary of Color
-Combinations* (1930s). The combination numbers are in each file's description.
+**Colour skins**: minimal and pastel, built from the colour combinations in Sanzo Wada's
+*A Dictionary of Color Combinations* (1930s). Flat buttons, light screens, no texture. The
+combination numbers are in each file's description.
 
 | Skin | Colours |
 |---|---|
-| **Indigo** | Deep indigo, jasper red, benzol green (No. 155) |
-| **Teal Grove** | Deep slate green, pomegranate purple, cobalt green, green blue (No. 271) |
-| **Violet Night** | Violet black, spinel red, rosolane purple, apricot yellow (No. 265, 277) |
-| **Harbor** | Sea blue, sulphur yellow, yellow orange (No. 151) |
-| **Naples** | Light Naples yellow, eugenia red, yellow ochre, deep slate green screens (No. 325) |
+| **Seashell** | Hermosa pink, seashell pink, calamine blue (No. 176) |
+| **Glaucous** | Glaucous green, seashell pink, citron yellow (No. 150) |
+| **Lavender** | Grayish lavender, ivory buff, yellow orange (No. 235) |
+| **Lemon** | Pale lemon yellow, corinthian pink, warm gray (No. 169) |
+| **Turquoise** | Turquoise green, cobalt green, cream yellow, grenadine pink (No. 230, 300) |
 
 The colour values come from Matt DesLauriers'
 [dictionary-of-colour-combinations](https://github.com/mattdesl/dictionary-of-colour-combinations)
@@ -150,7 +151,7 @@ A `.muskin` file is a JSON object. Every key is optional: anything left out keep
 | `format` | Always `1` for now. |
 | `name` | Name shown in the SKIN menu. If missing, the file name is used. |
 | `author`, `description` | Free text, for people who share skins. |
-| `base` | Optional: a built-in skin to start from instead of Console: `console`, `pattern`, `session`, `modular`, `studio-pro`, `indigo`, `teal-grove`, `violet-night`, `harbor` or `naples`. Useful for small variations, e.g. `{ "base": "modular", "colors": { "accent": "#00c2ff" } }`. |
+| `base` | Optional: a built-in skin to start from instead of Console: `console`, `pattern`, `session`, `modular`, `studio-pro`, `seashell`, `glaucous`, `lavender`, `lemon` or `turquoise`. Useful for small variations, e.g. `{ "base": "modular", "colors": { "accent": "#00c2ff" } }`. |
 
 ### `colors`
 
@@ -215,10 +216,10 @@ off long labels.
 ## Tips
 
 - Start from the built-in skin closest to what you want, then change a few colours at a time.
-- Light skins work two ways: light screens with darker LED colours (Session), or dark screens on a
-  light panel (Naples).
-- Want colours that go together? Pick a combination from Sanzo Wada's book (see above): use the
-  darkest colour for `panel` / `screen`, the brightest for `accent` and the `cap` colours.
+- Light skins need darker LED colours on their light screens (see Session and the colour skins).
+- Want colours that go together? Pick a combination from Sanzo Wada's book (see above). For a
+  pastel skin, use very light tints of the combination for `panel` and `screen`, the pastel
+  colours themselves for the `cap` colours, and deeper tones of them for the LED colours.
 - Test every screen: the Pitch module's HARMONICS tab, a help panel (**?**) and an invalid BPM
   (type `0`) show most colours at once.
 - Muculator never crashes on a bad file. An unreadable file shows as "(unreadable file)" in the
