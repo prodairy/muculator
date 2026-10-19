@@ -27,6 +27,7 @@ public:
     void setBpmTextFor (const juce::String& moduleId, const juce::String& text) override;
     bool isChained() const override;
     double hostSampleRate() const override;
+    bool hasHost() const override { return ! proc.isStandalone(); }
     juce::ValueTree moduleState (const juce::String& moduleId) override;
 
 private:

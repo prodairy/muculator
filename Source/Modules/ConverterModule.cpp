@@ -76,6 +76,7 @@ ConverterModule::ConverterModule (ModuleContext& c) : ModuleBase ("convert", "Co
         publishErrors();
     };
     tHostRate.setTooltip ("Lit: follow the host / audio device sample rate");
+    tHostRate.setVisible (ctx.hasHost());
 
     for (auto* r : { &gainOut, &eqOut, &tOut, &dOut })
         r->setLineHeight (20.0f);
@@ -167,7 +168,7 @@ void ConverterModule::updateEq (Src src)
 
 void ConverterModule::updateTime (Src src)
 {
-    if (tHostRate.getToggleState())
+    if (ctx.hasHost() && tHostRate.getToggleState())
         tRate.setText (clean (ctx.hostSampleRate(), 0));
 
     Validator v;
@@ -283,8 +284,11 @@ void ConverterModule::layoutContent (juce::Rectangle<int> r)
     // sample rate row lives inside the time readout area's top
     auto outArea = tOut.getBounds();
     auto srRow = outArea.removeFromTop (52);
-    tHostRate.setBounds (srRow.removeFromRight (78).withTrimmedTop (16));
-    srRow.removeFromRight (8);
+    if (ctx.hasHost())
+    {
+        tHostRate.setBounds (srRow.removeFromRight (78).withTrimmedTop (16));
+        srRow.removeFromRight (8);
+    }
     tRate.setBounds (srRow);
     outArea.removeFromTop (6);
     tOut.setBounds (outArea);
@@ -297,7 +301,8 @@ Four converters in one place. Type in any field of a panel and the other fields 
 # How to use
 - dB <> LINEAR GAIN: a level change as a multiplier.
 - EQ: Q <> bandwidth in octaves, with the -3 dB edges in Hz.
-- ms <> Hz <> SAMPLES: times at a sample rate. HOST SR (lit) follows the session; typing a rate turns it off.
+- ms <> Hz <> SAMPLES: times at a sample rate. )" + juce::String (ctx.hasHost() ? "HOST SR (lit) follows the session; typing a rate turns it off."
+                                                                              : "Type the sample rate of your project.") + R"(
 - DISTANCE <> ms: how long sound takes to travel, for lining up mics and speakers.
 Click a value to copy it.
 # Example

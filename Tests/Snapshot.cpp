@@ -167,6 +167,18 @@ int main (int argc, char** argv)
         skins->select ("console", false);
     }
 
+    // Standalone app: no HOST SYNC, no HOST SR buttons, help texts without them
+    {
+        MuculatorProcessor app (true);
+        std::unique_ptr<MuculatorEditor> sa (dynamic_cast<MuculatorEditor*> (app.createEditor()));
+        sa->selectModule (4);
+        save (*sa, dir, "9a_standalone_convert");
+        sa->selectModule (5);
+        save (*sa, dir, "9b_standalone_loop");
+        sa->getModule (5)->showHelp (true);
+        save (*sa, dir, "9c_standalone_loop_help");
+    }
+
     // state round-trip
     juce::MemoryBlock mb;
     proc.getStateInformation (mb);

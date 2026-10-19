@@ -71,7 +71,7 @@ juce::String DelayModule::helpText() const
     return R"(# What it does
 Lists every note value from 1/1 to 1/512 at the current tempo: straight, dotted and triplet, in milliseconds and in Hz.
 # How to use
-1. Set the tempo in the top bar, or turn on HOST SYNC.
+1. )" + tempoStep() + R"(
 2. Find the note value you want. The amber row is 1/4, one beat.
 3. Type the ms value into a delay, or the Hz value into an LFO rate. Click a value to copy it.
 # Example

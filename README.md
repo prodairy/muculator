@@ -3,7 +3,7 @@
 # MUCULATOR
 
 **The calculator rack for music producers.**
-Free, open-source VST3 / AU plugin that does the studio maths for you: reverb and delay times, compressor timing, pitch after time-stretch, unit conversions and loop lengths, all locked to your tempo.
+Free, open-source VST3 / AU / CLAP plugin (and standalone app) that does the studio maths for you: reverb and delay times, compressor timing, pitch after time-stretch, unit conversions and loop lengths, all locked to your tempo.
 
 ![Stretch module showing a microtone warning](docs/screenshots/stretch-microtone.png)
 
@@ -74,10 +74,14 @@ See the [skin guide](docs/SKINS.md).
    - **Windows (VST3):** `C:\Program Files\Common Files\VST3\`
    - **macOS (VST3):** `~/Library/Audio/Plug-Ins/VST3/`
    - **macOS (AU):** `~/Library/Audio/Plug-Ins/Components/`
+   - **Windows (CLAP):** `C:\Program Files\Common Files\CLAP\`
+   - **macOS (CLAP):** `~/Library/Audio/Plug-Ins/CLAP/`
 3. Rescan plugins in your DAW. Muculator shows up as an effect.
 
+**Standalone app (macOS):** `Muculator.app` opens without a DAW. There is no host there, so HOST SYNC and HOST SR are hidden: set the tempo by typing, dragging or TAP, and type the sample rate.
+
 > **macOS:** the builds are not notarized yet. If macOS blocks the plugin, run
-> `xattr -cr ~/Library/Audio/Plug-Ins/VST3/Muculator.vst3` (and the same for `Muculator.component`).
+> `xattr -cr ~/Library/Audio/Plug-Ins/VST3/Muculator.vst3` (and the same for `Muculator.component`, `Muculator.clap` and `Muculator.app`).
 >
 > **Windows:** SmartScreen may warn about an unknown publisher; the plugin is unsigned.
 
@@ -95,7 +99,7 @@ cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
 cmake --build build --config Release
 ```
 
-Artefacts end up in `build/Muculator_artefacts/Release/` (`VST3/`, `AU/`, `Standalone/`).
+Artefacts end up in `build/Muculator_artefacts/Release/` (`VST3/`, `AU/`, `CLAP/`, `Standalone/`). The CLAP target comes from [clap-juce-extensions](https://github.com/free-audio/clap-juce-extensions) (MIT), downloaded at configure time; turn it off with `-DMUCULATOR_CLAP=OFF`.
 
 | Target | Purpose |
 |---|---|
@@ -129,14 +133,14 @@ Bug reports, ideas and pull requests are welcome. See [CONTRIBUTING.md](CONTRIBU
 ## License
 
 Copyright © 2026 prodairy. Muculator is free software under the **GNU AGPLv3** ([LICENSE](LICENSE)).
-It is built with [JUCE](https://juce.com) (AGPLv3) and the Steinberg VST3 SDK (MIT).
+It is built with [JUCE](https://juce.com) (AGPLv3), the Steinberg VST3 SDK (MIT) and [clap-juce-extensions](https://github.com/free-audio/clap-juce-extensions) (MIT).
 VST is a registered trademark of Steinberg Media Technologies GmbH.
 
 ---
 
 ## Türkçe
 
-**Muculator**, müzik prodüktörleri için ücretsiz ve açık kaynak bir VST3 / AU eklentisidir. Sesi değiştirmez; stüdyodaki hesapları DAW'ın içinde, tempona kilitli olarak yapar.
+**Muculator**, müzik prodüktörleri için ücretsiz ve açık kaynak bir VST3 / AU / CLAP eklentisidir (tek başına açılan bir uygulaması da var). Sesi değiştirmez; stüdyodaki hesapları DAW'ın içinde, tempona kilitli olarak yapar.
 
 - **Reverb:** Tarza ve BPM'e göre pre-delay, decay ve toplam süre; önerilen satır işaretli; tahmini oda ölçüleri.
 - **Delay:** 1/1'den 1/512'ye kadar normal, noktalı ve triplet süreler (ms ve Hz).
@@ -150,5 +154,7 @@ VST is a registered trademark of Steinberg Media Technologies GmbH.
 **Stretch:** Eski BPM'i, eski notayı ve yeni BPM'i girersin; yeni notayı ve frekansı verir. Sonuç iki notanın arasında kalırsa **MİKROTON UYARISI** gösterir ve notaya tam oturması için hangi BPM'i kullanman gerektiğini yazar.
 
 **Kurulum:** [Releases](../../releases/latest) sayfasından kendi sistemine uygun zip dosyasını indir, eklentiyi yukarıdaki klasöre kopyala ve DAW'da eklentileri yeniden tarat.
+
+**Standalone uygulama (macOS):** `Muculator.app` DAW olmadan açılır. Orada DAW olmadığı için HOST SYNC ve HOST SR düğmeleri gizlidir: tempoyu yazarak, sürükleyerek ya da TAP ile gir, sample rate'i elle yaz.
 
 **Logic'te Host Sync:** Logic, çalmayan kanallardaki eklentileri durdurur; Muculator tempoyu yalnızca çalışırken okuyabilir. Host Sync'in her zaman, durdurulmuşken bile çalışması için Muculator'ı **Stereo Out** kanalına koy. Sese dokunmadığı ve işlemci harcamadığı için bunun bir zararı yok.

@@ -116,7 +116,7 @@ juce::String ReverbModule::helpText() const
     return R"(# What it does
 Turns the tempo into reverb settings that breathe with the song: pre-delay, decay and total length for five reverb styles, plus a rough room size.
 # How to use
-1. Set the tempo in the top bar, or turn on HOST SYNC.
+1. )" + tempoStep() + R"(
 2. Pick a style on the left.
 3. The amber row is the recommended length for that style. Click any row to pick another.
 4. Type PRE-DELAY and DECAY into your reverb plugin. Click a value to copy it.

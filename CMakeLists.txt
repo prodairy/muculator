@@ -46,6 +46,23 @@ juce_add_plugin(Muculator
     NEEDS_WEB_BROWSER FALSE
     NEEDS_CURL FALSE)
 
+# CLAP: JUCE has no CLAP target of its own, so clap-juce-extensions (MIT) wraps the same plugin.
+# Pinned to a commit with JUCE 9 support (no release tag has it yet).
+option(MUCULATOR_CLAP "Build the CLAP plugin" ON)
+if(MUCULATOR_CLAP)
+    include(FetchContent)
+    FetchContent_Declare(clap-juce-extensions
+        GIT_REPOSITORY https://github.com/free-audio/clap-juce-extensions.git
+        GIT_TAG 7adee3a1bd4684d4caa5601100e364abccff4b4d
+        GIT_SUBMODULES_RECURSE TRUE)
+    FetchContent_MakeAvailable(clap-juce-extensions)
+    clap_juce_extensions_plugin(TARGET Muculator
+        CLAP_ID "io.github.prodairy.muculator"
+        CLAP_FEATURES audio-effect utility
+        CLAP_MANUAL_URL "https://github.com/prodairy/muculator"
+        CLAP_SUPPORT_URL "https://github.com/prodairy/muculator/issues")
+endif()
+
 # Built-in skins: the same .muskin files users copy and edit (docs/SKINS.md).
 juce_add_binary_data(MuculatorSkinData
     HEADER_NAME SkinData.h
