@@ -27,10 +27,26 @@ int main (int argc, char** argv)
         save (*ed, dir, names[i]);
     }
 
+    // Loop: LENGTH > BPM (a 7.742 s loop of 4 bars = 124 BPM)
+    {
+        ed->selectModule (5);
+        auto loopState = proc.state.getOrCreateChildWithName ("loop", nullptr);
+        loopState.setProperty ("length", "7.742", nullptr);
+        proc.state.setProperty ("loadCount", (int) proc.state.getProperty ("loadCount", 0) + 1, nullptr); // rebuilds the modules
+        ed->selectModule (5);
+        auto* loop = dynamic_cast<LoopModule*> (ed->getModule (5));
+        loop->selectMode (1);
+        save (*ed, dir, "6b_loop_to_bpm");
+        loop->showHelp (true);
+        save (*ed, dir, "6c_loop_to_bpm_help");
+        loop->showHelp (false);
+        loop->selectMode (0);
+    }
+
     ed->selectModule (3);
     auto* pitch = dynamic_cast<PitchModule*> (ed->getModule (3));
-    const char* tabs[] = { "4a_transpose", "4b_stretch_ok", "4c_freq", "4d_harmonics" };
-    for (int t = 0; t < 4; ++t)
+    const char* tabs[] = { "4a_transpose", "4b_stretch_ok", "4c_freq", "4d_harmonics", "4i_freq_map" };
+    for (int t = 0; t < 5; ++t)
     {
         pitch->selectTab (t);
         save (*ed, dir, tabs[t]);
@@ -89,7 +105,7 @@ int main (int argc, char** argv)
         {
             ed->selectModule (i);
             if (i == 3)
-                for (int t = 0; t < 4; ++t) pitch->selectTab (t);
+                for (int t = 0; t < 5; ++t) pitch->selectTab (t);
         }
     }
     ed->setBpmTextFor ("pitch", "0");
@@ -104,6 +120,31 @@ int main (int argc, char** argv)
     proc.state.setProperty ("module", 3, nullptr);
     proc.state.setProperty ("loadCount", (int) proc.state.getProperty ("loadCount", 0) + 1, nullptr);
     save (*ed, dir, "4h_harmonics_square_flats_432");
+
+    // Frequency map with the marker at 2.5 kHz
+    for (auto [prop, value] : { std::pair<const char*, juce::var> { "fmMode", 1 }, { "fmFreq", "2500" }, { "flats", false },
+                                { "a4", "440" }, { "tab", 4 } })
+        pitchState.setProperty (prop, value, nullptr);
+    proc.state.setProperty ("loadCount", (int) proc.state.getProperty ("loadCount", 0) + 1, nullptr);
+    save (*ed, dir, "4j_freq_map_marker");
+    ed->getModule (3)->showHelp (true);
+    save (*ed, dir, "4k_freq_map_help");
+    ed->getModule (3)->showHelp (false);
+
+    // Time-stretch: 120 -> 126 BPM (clean), then 120 -> 160 BPM (quality warning)
+    pitchState.setProperty ("stKind", 1, nullptr);
+    pitchState.setProperty ("tab", 1, nullptr);
+    proc.state.setProperty ("loadCount", (int) proc.state.getProperty ("loadCount", 0) + 1, nullptr);
+    ed->setBpmTextFor ("pitch", "126");
+    save (*ed, dir, "4l_timestretch");
+    ed->getModule (3)->showHelp (true);
+    save (*ed, dir, "4m_timestretch_help");
+    ed->getModule (3)->showHelp (false);
+    ed->setBpmTextFor ("pitch", "160");
+    save (*ed, dir, "4n_timestretch_warning");
+    ed->setBpmTextFor ("pitch", "120");
+    pitchState.setProperty ("stKind", 0, nullptr);
+    proc.state.setProperty ("loadCount", (int) proc.state.getProperty ("loadCount", 0) + 1, nullptr);
 
     // HOST SYNC on while the host is not running the plugin (no audio blocks here) -> footer hint
     proc.state.setProperty ("hostSync", true, nullptr);

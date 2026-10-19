@@ -32,7 +32,7 @@ auval -v aufx Mclc Mucu                                   # AU validation (macOS
 |---|---|
 | `Source/Calc.{h,cpp}` | All maths. Pure C++, **no JUCE**, unit tested by `Tests/CalcTests.cpp`. |
 | `Source/Modules/ModuleBase.*` | `ModuleContext` (BPM, chain, sample rate, per-module ValueTree) and the `Validator` helper. |
-| `Source/Modules/*Module.cpp` | One module each: Reverb, Delay, Compressor, Pitch (4 tabs), Converter, Loop. All declared in `Modules.h`. |
+| `Source/Modules/*Module.cpp` | One module each: Reverb, Delay, Compressor, Pitch (5 tabs, incl. the `FrequencyMap` view), Converter, Loop. All declared in `Modules.h`. |
 | `Source/UI/Skin.*` | `Skin` (every colour, button style, corner, texture, font), `.muskin` JSON parser, `SkinManager` (built-in + user skins, saved choice). `ui::skin()` is the current skin. |
 | `Source/UI/ConsoleLookAndFeel.*` | Draws everything from `ui::skin()`: fonts, `drawSection`, `drawScreen`, `drawLed`, the four button styles. |
 | `Skins/*.muskin` | Built-in skins, embedded with `juce_add_binary_data`: 5 studio skins and 5 minimal pastel colour skins (each with a `-dark` version) from Sanzo Wada's *A Dictionary of Color Combinations* (`SkinManager::colourSkinIds`). Format and the Claude prompt: `docs/SKINS.md`. |
@@ -46,7 +46,7 @@ auval -v aufx Mclc Mucu                                   # AU validation (macOS
 
 - 12-TET, C4 = MIDI 60. **A4 = 440 Hz by default**; the Pitch module's `a4` property (400 to 480 Hz) changes it, and every pitch formula in `Calc` takes it as a parameter. Sharps by default; Pitch `flats` switches to Db, Eb...
 - Harmonic count = rows listed after the odd / even filter (16 odd = harmonics 1 to 31).
-- Stretch is **varispeed**: pitch ratio = new BPM / old BPM. Microtone warning when the **displayed** deviation (rounded to 0.1 ct) is ≥ `kMicrotoneThresholdCents` (10). The warning names both neighbour notes, the cents off each, and the BPM needed to land on each.
+- Stretch has two modes. **Varispeed**: pitch ratio = new BPM / old BPM; FIT TO SCALE lists the varispeed tempos that land on a note of a major / minor key. **Time-stretch**: pitch kept, length × old / new BPM; quality is clean up to `kStretchCleanPercent` (10 %) tempo change, a warning above `kStretchWarnPercent` (25 %). Microtone warning when the **displayed** deviation (rounded to 0.1 ct) is ≥ `kMicrotoneThresholdCents` (10). The warning names both neighbour notes, the cents off each, and the BPM needed to land on each.
 - BPM is valid from 1 to 999. Number parsing accepts a comma as the decimal separator. Invalid input must never crash: mark the field red (`LedField::setInvalid`), show the error through `showErrors`, and display `--`.
 - CHAIN on: one shared `globalBpm`. CHAIN off: each module keeps its own `bpm` child property, and the top-bar BPM edits the visible module. HOST SYNC locks the BPM field and is applied again when the visible module changes; TAP turns sync off.
 - The host may stop calling `processBlock` (e.g. silent tracks). After 1 s without a block the HOST TEMPO readout shows IDLE and, with HOST SYNC on, the footer shows a hint. Logic (detected with `juce::PluginHostType().isLogic()`) pauses every track that is not playing, so its hint says to put Muculator on the Stereo Out; naming Logic in that hint was approved by the owner. Reading the tempo outside `processBlock` is not supported, so this cannot be fixed in code.

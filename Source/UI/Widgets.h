@@ -62,6 +62,7 @@ public:
     void setInvalid (bool shouldBeInvalid);
     void setLocked (bool locked, const juce::String& badge = {});
     void setCaption (const juce::String& c) { caption = c; repaint(); }
+    void setUnit (const juce::String& u) { unit = u; repaint(); }
     void setFontHeight (float h);
     void setTooltip (const juce::String& t) { editor.setTooltip (t); }
     bool isEditing() const { return editor.hasKeyboardFocus (true); }

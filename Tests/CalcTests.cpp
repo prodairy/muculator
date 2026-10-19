@@ -183,6 +183,66 @@ int main()
     // --- loop
     near ("4 bars @120 4/4", loopMs (120, 4, 4, 4), 8000);
     near ("1 bar 6/8 @120", barMs (120, 6, 8), 1500);
+    near ("loop -> bpm", loopBpm (8000, 4, 4, 4), 120);
+    near ("loop -> bpm 6/8", loopBpm (1500, 1, 6, 8), 120);
+    near ("loop -> bpm example", loopBpm (7742, 4, 4, 4), 124.0, 0.01);
+    near ("loop roundtrip", loopMs (loopBpm (3456.7, 2, 7, 8), 2, 7, 8), 3456.7, 1e-9);
+
+    // --- time-stretch
+    {
+        auto t = timeStretch (120, 126, 8000);
+        near ("ts speed", t.speed, 1.05);
+        near ("ts percent", t.percent, 5.0, 1e-9);
+        near ("ts length", t.newLengthMs, 8000.0 * 120.0 / 126.0, 1e-9);
+        truth ("ts 5 % clean", t.quality == StretchQuality::Clean);
+        truth ("ts 10 % clean", timeStretch (100, 110, 1000).quality == StretchQuality::Clean);
+        truth ("ts 20 % audible", timeStretch (100, 120, 1000).quality == StretchQuality::Audible);
+        truth ("ts -25 % audible", timeStretch (100, 75, 1000).quality == StretchQuality::Audible);
+        truth ("ts 30 % extreme", timeStretch (100, 130, 1000).quality == StretchQuality::Extreme);
+        near ("ts slower = longer", timeStretch (120, 60, 1000).newLengthMs, 2000);
+    }
+
+    // --- fit to scale
+    {
+        truth ("A in A minor", inScale (69, 9, Scale::Minor));
+        truth ("C in A minor", inScale (60, 9, Scale::Minor));
+        truth ("C# not in A minor", ! inScale (61, 9, Scale::Minor));
+        truth ("C# in A major", inScale (61, 9, Scale::Major));
+        truth ("low octave wraps", inScale (9, 9, Scale::Minor) && inScale (0, 9, Scale::Minor));
+        auto fits = scaleFits (120, 440, 126, 9, Scale::Minor, 4);
+        truth ("4 fits", fits.size() == 4);
+        truth ("fits sorted", fits[0].bpm < fits[1].bpm && fits[2].bpm < fits[3].bpm);
+        truth ("fits: G A B C", noteName (fits[0].midi) == "G4" && noteName (fits[1].midi) == "A4"
+                                    && noteName (fits[2].midi) == "B4" && noteName (fits[3].midi) == "C5");
+        near ("fit A = 120", fits[1].bpm, 120, 1e-9);
+        near ("fit B", fits[2].bpm, 134.6954, 1e-3);
+        near ("fit G", fits[0].bpm, 106.9078, 1e-3);
+        near ("fit C semis", fits[3].semitones, 3, 1e-9);
+        for (auto& f : scaleFits (120, 440, 126, 9, Scale::Minor))
+            near ("fit lands on note", stretch (120, 440, f.bpm).note.cents, 0, 1e-6);
+        for (auto& f : scaleFits (5, 440, 2, 0, Scale::Major, 50))
+            truth ("fits within bpm range", f.bpm >= kMinBpm && f.bpm <= kMaxBpm);
+    }
+
+    // --- swing / haas
+    {
+        auto s = swing (120, 16, 60);
+        near ("swing pair", s.pairMs, 250);
+        near ("swing long", s.longMs, 150);
+        near ("swing short", s.shortMs, 100);
+        near ("swing late", s.lateMs, 25);
+        near ("straight = no shift", swing (120, 8, 50).lateMs, 0);
+        near ("66.7 % = triplet", swing (120, 8, 200.0 / 3.0).longMs, 2.0 * noteMs (120, 8, NoteKind::Triplet), 1e-9);
+    }
+
+    // --- file size
+    near ("cd minute", audioBytes (60, 44100, 16, 2), 10584000);
+    near ("24 bit mono", audioBytes (1, 48000, 24, 1), 144000);
+    near ("32 bit float 5.1", audioBytes (10, 96000, 32, 6), 23040000);
+
+    // --- instrument map
+    for (auto& i : instrumentRanges())
+        truth (i.name, i.fundLowHz > 0 && i.fundLowHz < i.fundHighHz && i.zoneLowHz < i.zoneHighHz && i.fundHighHz <= 20000);
 
     // --- formatting
     truth ("no -0", fmt (-0.0001, 2) == "0.00");
