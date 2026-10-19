@@ -134,9 +134,13 @@ void MuculatorEditor::showSkinMenu()
         menu.addItem ((int) entries.size(), text, e.readable, e.id == skins->currentId());
     };
 
-    menu.addSectionHeader ("BUILT-IN SKINS");
+    menu.addSectionHeader ("STUDIO SKINS");
     for (const auto& e : skins->builtIns())
+    {
+        if (e.id == ui::SkinManager::colourSkinIds()[0])
+            menu.addSectionHeader ("COLOUR SKINS  (Sanzo Wada combinations)");
         add (e);
+    }
     menu.addSectionHeader ("MY SKINS");
     for (const auto& e : skins->userSkins())
         add (e);

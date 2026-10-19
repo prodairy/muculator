@@ -234,9 +234,20 @@ SkinManager::SkinManager()
    #endif
 }
 
+const juce::StringArray& SkinManager::colourSkinIds()
+{
+    static const juce::StringArray ids { "indigo", "teal-grove", "violet-night", "harbor", "naples" };
+    return ids;
+}
+
 const juce::StringArray& SkinManager::builtInIds()
 {
-    static const juce::StringArray ids { "console", "pattern", "session", "modular", "studio-pro" };
+    static const juce::StringArray ids = []
+    {
+        juce::StringArray all { "console", "pattern", "session", "modular", "studio-pro" };
+        all.addArray (colourSkinIds());
+        return all;
+    }();
     return ids;
 }
 

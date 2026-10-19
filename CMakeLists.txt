@@ -55,7 +55,12 @@ juce_add_binary_data(MuculatorSkinData
         Skins/pattern.muskin
         Skins/session.muskin
         Skins/modular.muskin
-        Skins/studio-pro.muskin)
+        Skins/studio-pro.muskin
+        Skins/indigo.muskin
+        Skins/teal-grove.muskin
+        Skins/violet-night.muskin
+        Skins/harbor.muskin
+        Skins/naples.muskin)
 set_target_properties(MuculatorSkinData PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
 set(MUCULATOR_UI_SOURCES

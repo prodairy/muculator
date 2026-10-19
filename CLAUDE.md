@@ -34,9 +34,9 @@ auval -v aufx Mclc Mucu                                   # AU validation (macOS
 | `Source/Modules/*Module.cpp` | One module each: Reverb, Delay, Compressor, Pitch (4 tabs), Converter, Loop. All declared in `Modules.h`. |
 | `Source/UI/Skin.*` | `Skin` (every colour, button style, corner, texture, font), `.muskin` JSON parser, `SkinManager` (built-in + user skins, saved choice). `ui::skin()` is the current skin. |
 | `Source/UI/ConsoleLookAndFeel.*` | Draws everything from `ui::skin()`: fonts, `drawSection`, `drawScreen`, `drawLed`, the four button styles. |
-| `Skins/*.muskin` | Built-in skins, embedded with `juce_add_binary_data`. Format and the Claude prompt: `docs/SKINS.md`. |
+| `Skins/*.muskin` | Built-in skins, embedded with `juce_add_binary_data`: 5 studio skins and 5 colour skins from Sanzo Wada's *A Dictionary of Color Combinations* (`SkinManager::colourSkinIds`). Format and the Claude prompt: `docs/SKINS.md`. |
 | `Source/UI/Widgets.*` | `IllumButton`, `ChainButton`, `LedField` (drag / wheel via `setNudger`), `NotePicker`, `LedReadout`, `LedTable` (scrolls; click copies a value), `WarningPanel`, `HelpPanel`, `ButtonGroup`. |
-| `Source/PluginEditor.*` | Top bar (BPM, TAP, CHAIN, HOST SYNC), module switcher, implements `ModuleContext`. |
+| `Source/PluginEditor.*` | Top bar (SKIN menu, BPM, TAP, CHAIN, HOST SYNC), module switcher, implements `ModuleContext`. |
 | `Source/PluginProcessor.*` | Pass-through audio; reads host BPM and sample rate into atomics; stores state as a ValueTree. |
 | `Tests/Snapshot.cpp` | Headless renderer + invalid-input smoke test. |
 | `.github/workflows/build.yml` | Windows + macOS CI: unit tests, snapshot smoke test (PNGs uploaded as `Snapshots-*` artifacts), pluginval (VST3, strictness 10), auval (AU). A `v*` tag publishes a GitHub Release with zips. |
@@ -53,11 +53,12 @@ auval -v aufx Mclc Mucu                                   # AU validation (macOS
 - Only one module is visible at a time. Fixed window size of 1000×680.
 - Reverb pre-delay is snapped to a 1/64 to 1/512 note and is at most 25 % of the total. Room size uses Sabine with 1.59 : 1.26 : 1 proportions.
 - State: modules read and write their own ValueTree child. `setStateInformation` merges into the existing tree and bumps `loadCount` so an open editor rebuilds.
-- Skins: never hard-code a colour; use `ui::skin()`. Buttons take a `ui::Cap` role, not a colour. Text on panels uses `text` / `textDim`, text on screens `screenText` / `led*`. The skin is a per-computer setting (`Muculator.settings` next to the `Skins` folder), not part of the DAW project. `Skins/console.muskin` must match `Skin::console()`; the snapshot tool checks it and renders every built-in skin (`skin_<id>_*.png`).
+- Skins: never hard-code a colour; use `ui::skin()`. Buttons take a `ui::Cap` role, not a colour. Text on panels uses `text` / `textDim`, text on screens `screenText` / `led*`; LED colours only ever sit on `screen` (warning panels fill with it too). New colour skins take their palette from a numbered Wada combination and name it in the description. The skin is a per-computer setting (`Muculator.settings` next to the `Skins` folder), not part of the DAW project. `Skins/console.muskin` must match `Skin::console()`; the snapshot tool checks it and renders every built-in skin (`skin_<id>_*.png`).
 - Avoid trademarks in code and docs (no "SSL"; say "console").
 
 ## Conventions
 
+- Shared UI code (`Source/UI/Skin.*`, `ConsoleLookAndFeel.*`, `Widgets.*`) is meant to move to a common base for other plugins later (ROADMAP "Ortak temel"), so do not add Muculator-specific logic to it; BPM, notes and module behaviour belong in `Source/Modules/`, `PluginEditor` or `Calc`. Known exceptions to untangle at that move: `NotePicker` and `copyableValue` use `Calc`.
 - JUCE code style: 4 spaces, a space before `(`, `juce::` prefixes, no exceptions for control flow.
 - New formula → `Calc.cpp` + a test. New module → subclass `ModuleBase` (including `helpText()` for the **?** panel), add it in `MuculatorEditor::buildModules`, and update `moduleIds` / `moduleNames` and the snapshot tool.
 - Commits from this machine: name `prodairy`, email `344521037+prodairy@users.noreply.github.com`. The owner's other public identity (`airy` / `airysocial@pm.me`, used by GitHub web merges) is intentional and fine to leave visible; do not rewrite history to remove it.

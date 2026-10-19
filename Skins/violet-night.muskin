@@ -1,0 +1,46 @@
+{
+  "format": 1,
+  "name": "Violet Night",
+  "author": "Muculator",
+  "description": "Violet black with spinel red, rosolane purple and apricot yellow. Colours from combinations 265 and 277 in Sanzo Wada, A Dictionary of Color Combinations.",
+  "colors": {
+    "panel": "#2c1757",
+    "panelDark": "#1e0e3f",
+    "panelEdge": "#10071f",
+    "recess": "#25124a",
+    "accent": "#f27291",
+    "text": "#f7eaf1",
+    "textDim": "#ae98c9",
+    "highlight": "#ffdd00",
+    "screen": "#13072b",
+    "screenEdge": "#070214",
+    "screenText": "#9280b2",
+    "ledRed": "#ff5c7a",
+    "ledAmber": "#ffdd00",
+    "ledGreen": "#b9e35e",
+    "ledBlue": "#a3abff",
+    "capRed": "#f27291",
+    "capYellow": "#ffdd00",
+    "capGreen": "#a9c85c",
+    "capBlue": "#9a88ff",
+    "capWhite": "#f7eaf1",
+    "capOrange": "#ffa05c",
+    "buttonFace": "#3d2470",
+    "buttonText": "#f2e5f5",
+    "litText": "#1e0e3f"
+  },
+  "style": {
+    "buttons": "flat",
+    "texture": "gradient",
+    "buttonCorner": 8,
+    "sectionCorner": 10,
+    "screenCorner": 6,
+    "accentStripe": 3,
+    "screws": false,
+    "screenGlare": false
+  },
+  "fonts": {
+    "label": "",
+    "led": ""
+  }
+}

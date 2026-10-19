@@ -4,16 +4,33 @@ A skin changes how Muculator looks: colours, button style, corner shapes, panel 
 It never changes what Muculator calculates.
 
 A skin is one small text file with the **`.muskin`** extension. Inside is JSON, so you can open and
-edit it with any text editor. Muculator comes with five built-in skins, and you can add as many of
+edit it with any text editor. Muculator comes with ten built-in skins, and you can add as many of
 your own as you like.
 
-| Built-in skin | Look |
+**Studio skins**, inspired by the look of different kinds of studio software:
+
+| Skin | Look |
 |---|---|
 | **Console** (default) | Analog mixing console: grey metal, LED screens, illuminated buttons |
-| **Pattern** | Step-sequencer studio: blue-grey body, glossy buttons, orange and lime accents |
+| **Pattern** | Step-sequencer studio: blue body, glossy buttons, orange and lime accents |
 | **Session** | Minimal clip-based studio: flat light grey, thin lines, light screens |
 | **Modular** | Modern modular studio: anthracite, one orange accent, rounded corners |
 | **Studio Pro** | Classic desktop studio: graphite, blue accent, soft gradients, glass buttons |
+
+**Colour skins**, built from the colour combinations in Sanzo Wada's *A Dictionary of Color
+Combinations* (1930s). The combination numbers are in each file's description.
+
+| Skin | Colours |
+|---|---|
+| **Indigo** | Deep indigo, jasper red, benzol green (No. 155) |
+| **Teal Grove** | Deep slate green, pomegranate purple, cobalt green, green blue (No. 271) |
+| **Violet Night** | Violet black, spinel red, rosolane purple, apricot yellow (No. 265, 277) |
+| **Harbor** | Sea blue, sulphur yellow, yellow orange (No. 151) |
+| **Naples** | Light Naples yellow, eugenia red, yellow ochre, deep slate green screens (No. 325) |
+
+The colour values come from Matt DesLauriers'
+[dictionary-of-colour-combinations](https://github.com/mattdesl/dictionary-of-colour-combinations)
+data set (MIT). It lists all 348 combinations, a good source for your own skins.
 
 The built-in files are in the [`Skins/`](../Skins) folder of this repository. They are good
 starting points to copy.
@@ -24,7 +41,7 @@ starting points to copy.
 
 Click **SKIN** in the top bar, next to the Muculator logo. The menu lists:
 
-- **BUILT-IN SKINS**: the five skins above.
+- **STUDIO SKINS** and **COLOUR SKINS**: the ten skins above.
 - **MY SKINS**: every `.muskin` file in your skins folder.
 - **Open skins folder**: opens the folder where your own skins go (it is created if needed).
 - **Reload skins**: reads the folder again. Use it after adding or editing a file; Muculator stays open.
@@ -48,7 +65,8 @@ window uses the same skin, and a project you send to someone opens in their own 
 ## Make a skin with Claude (or another AI assistant)
 
 1. Copy this whole page (or send the link if the assistant can read web pages).
-2. Add the prompt below and describe the look you want.
+2. Add the prompt below and describe the look you want. You can also name a combination from
+   Sanzo Wada's *A Dictionary of Color Combinations* ("use combination 44").
 3. Save the answer as a file ending in `.muskin`, for example `Synthwave.muskin`, in your skins folder.
 4. In Muculator: **SKIN → Reload skins**, then pick it from **MY SKINS**.
 
@@ -132,7 +150,7 @@ A `.muskin` file is a JSON object. Every key is optional: anything left out keep
 | `format` | Always `1` for now. |
 | `name` | Name shown in the SKIN menu. If missing, the file name is used. |
 | `author`, `description` | Free text, for people who share skins. |
-| `base` | Optional: a built-in skin to start from instead of Console: `console`, `pattern`, `session`, `modular` or `studio-pro`. Useful for small variations, e.g. `{ "base": "modular", "colors": { "accent": "#00c2ff" } }`. |
+| `base` | Optional: a built-in skin to start from instead of Console: `console`, `pattern`, `session`, `modular`, `studio-pro`, `indigo`, `teal-grove`, `violet-night`, `harbor` or `naples`. Useful for small variations, e.g. `{ "base": "modular", "colors": { "accent": "#00c2ff" } }`. |
 
 ### `colors`
 
@@ -155,6 +173,9 @@ Colours are written `#RRGGBB`, or `#AARRGGBB` with transparency first.
 | `ledAmber` | Values, typed numbers, the recommended row. |
 | `ledGreen` | Results, selected rows, the HOST TEMPO readout. |
 | `ledBlue` | Information panels and the help panel frame. |
+
+Warning and information panels are drawn on the `screen` colour too, so the LED colours only need
+to be readable on `screen`.
 | `capRed` | Lit TAP button. |
 | `capYellow` | Lit CHAIN and waveform buttons; menu highlight. |
 | `capGreen` | Lit HOST SYNC, HOST SR, NOTE / FREQ buttons. |
@@ -194,7 +215,10 @@ off long labels.
 ## Tips
 
 - Start from the built-in skin closest to what you want, then change a few colours at a time.
-- Light skins work (see Session): use a light `screen` and darker LED colours.
+- Light skins work two ways: light screens with darker LED colours (Session), or dark screens on a
+  light panel (Naples).
+- Want colours that go together? Pick a combination from Sanzo Wada's book (see above): use the
+  darkest colour for `panel` / `screen`, the brightest for `accent` and the `cap` colours.
 - Test every screen: the Pitch module's HARMONICS tab, a help panel (**?**) and an invalid BPM
   (type `0`) show most colours at once.
 - Muculator never crashes on a bad file. An unreadable file shows as "(unreadable file)" in the
@@ -203,6 +227,6 @@ off long labels.
 ## Adding a built-in skin to Muculator
 
 Pull requests with new skins are welcome. Add the file to `Skins/`, list it in
-`juce_add_binary_data` in `CMakeLists.txt` and in `SkinManager::builtInIds()` in
-`Source/UI/Skin.cpp`. CI checks that every built-in skin loads without problems and uploads
+`juce_add_binary_data` in `CMakeLists.txt` and in `SkinManager::builtInIds()` (studio skins) or
+`SkinManager::colourSkinIds()` (colour skins) in `Source/UI/Skin.cpp`. CI checks that every built-in skin loads without problems and uploads
 screenshots of it (`skin_<name>_*.png`). Use names that describe a look, not a product or brand.

@@ -100,9 +100,12 @@ public:
 
     /** Where user skins live: .../Muculator/Skins in the user's application data folder. */
     static juce::File skinsFolder();
-    /** Reads a built-in skin by id (console, pattern, session, modular, studio-pro). */
+    /** Reads a built-in skin by id (the file name in Skins/ without .muskin). */
     static bool loadBuiltIn (const juce::String& id, Skin& result, juce::StringArray& problems);
+    /** Studio skins first, then the colour skins. */
     static const juce::StringArray& builtInIds();
+    /** Built-in skins made from Sanzo Wada's colour combinations; listed under their own menu header. */
+    static const juce::StringArray& colourSkinIds();
 
 private:
     void scan();

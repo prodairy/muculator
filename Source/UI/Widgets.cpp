@@ -639,6 +639,9 @@ void WarningPanel::paint (juce::Graphics& g)
     const auto c = level == Level::Error ? skin().ledRed : level == Level::Microtone ? skin().ledAmber : skin().ledBlue;
     auto r = getLocalBounds().toFloat();
 
+    // On the screen colour, so the LED colours read the same as on the screens (light skins too).
+    g.setColour (skin().screen);
+    g.fillRoundedRectangle (r, 4.0f);
     g.setColour (c.withAlpha (level == Level::Microtone ? 0.16f : 0.1f));
     g.fillRoundedRectangle (r, 4.0f);
     g.setColour (c.withAlpha (blinkOn ? 1.0f : 0.45f));
@@ -659,7 +662,8 @@ void WarningPanel::paint (juce::Graphics& g)
     }
     if (body.isNotEmpty())
     {
-        g.setColour (c.interpolatedWith (skin().text, 0.35f));
+        const auto contrast = skin().screen.getPerceivedBrightness() < 0.5f ? juce::Colours::white : juce::Colours::black;
+        g.setColour (c.interpolatedWith (contrast, 0.35f));
         g.setFont (ledFont (big ? 14.5f : 12.0f, false));
         g.drawFittedText (body, inner, juce::Justification::topLeft, big ? 5 : 3, 0.8f);
     }
