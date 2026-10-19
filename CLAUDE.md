@@ -1,6 +1,6 @@
 # Muculator
 
-Pass-through VST3/AU/Standalone plugin (JUCE 9, C++20) with tempo-synced music-production calculators.
+Pass-through VST3/AU/CLAP/Standalone plugin (JUCE 9, C++20) with tempo-synced music-production calculators.
 Public, AGPLv3, repo `prodairy/muculator`. The owner is new to programming and git: explain steps
 in plain Turkish, keep the UI text in English.
 
@@ -9,6 +9,7 @@ in plain Turkish, keep the UI text in English.
 - **Planned work lives in `ROADMAP.md` (local only, git-ignored; never commit it).** Read it when the owner names a feature or bug ("let's do the host sync item").
 - **Do not start coding unless the owner asks for it explicitly.** When they share ideas, bug reports or wishes, write them into `ROADMAP.md` (marked 🧑 for the owner, 🤖 for Claude) and stop. Implement only after an explicit "yapalım" / "do it" for that item.
 - Before risky or public actions (force-push, release tags, publishing), explain what will happen and wait for a yes.
+- **No public releases unless the owner asks for one.** Do not push `v*` tags or publish GitHub Releases; new work stays on branches and PRs. The owner tests on macOS with the **Standalone app**: point them to the `Muculator-macOS-Standalone` artifact of the PR's CI run (Actions → run → Artifacts). Keep it quick: no Windows / Linux test builds unless asked.
 
 ## Build & test
 
@@ -39,7 +40,7 @@ auval -v aufx Mclc Mucu                                   # AU validation (macOS
 | `Source/PluginEditor.*` | Top bar (SKIN menu, BPM, TAP, CHAIN, HOST SYNC), module switcher, implements `ModuleContext`. |
 | `Source/PluginProcessor.*` | Pass-through audio; reads host BPM and sample rate into atomics; stores state as a ValueTree. |
 | `Tests/Snapshot.cpp` | Headless renderer + invalid-input smoke test. |
-| `.github/workflows/build.yml` | Windows + macOS CI: unit tests, snapshot smoke test (PNGs uploaded as `Snapshots-*` artifacts), pluginval (VST3, strictness 10), auval (AU). A `v*` tag publishes a GitHub Release with zips. |
+| `.github/workflows/build.yml` | Windows + macOS CI: unit tests, snapshot smoke test (PNGs uploaded as `Snapshots-*` artifacts), pluginval (VST3, strictness 10), auval (AU), clap-validator (CLAP). The macOS app is uploaded as `Muculator-macOS-Standalone`. A `v*` tag publishes a GitHub Release with zips. |
 
 ## Decisions (do not change without asking)
 
@@ -50,6 +51,8 @@ auval -v aufx Mclc Mucu                                   # AU validation (macOS
 - CHAIN on: one shared `globalBpm`. CHAIN off: each module keeps its own `bpm` child property, and the top-bar BPM edits the visible module. HOST SYNC locks the BPM field and is applied again when the visible module changes; TAP turns sync off.
 - The host may stop calling `processBlock` (e.g. silent tracks). After 1 s without a block the HOST TEMPO readout shows IDLE and, with HOST SYNC on, the footer shows a hint. Logic (detected with `juce::PluginHostType().isLogic()`) pauses every track that is not playing, so its hint says to put Muculator on the Stereo Out; naming Logic in that hint was approved by the owner. Reading the tempo outside `processBlock` is not supported, so this cannot be fixed in code.
 - Sample-rate fields (Converter, Loop) follow the host while their HOST SR button is lit; typing a rate turns it off.
+- CLAP comes from clap-juce-extensions (FetchContent, pinned to a commit with JUCE 9 support; `MUCULATOR_CLAP`). Saved state must not contain `loadCount`, or clap-validator's state tests fail.
+- Standalone app (`MuculatorProcessor::isStandalone`, `ModuleContext::hasHost`): no input bus (no microphone, no feedback banner), HOST SYNC and HOST SR hidden, help texts drop them.
 - Only one module is visible at a time. Fixed window size of 1000×680.
 - Reverb pre-delay is snapped to a 1/64 to 1/512 note and is at most 25 % of the total. Room size uses Sabine with 1.59 : 1.26 : 1 proportions.
 - State: modules read and write their own ValueTree child. `setStateInformation` merges into the existing tree and bumps `loadCount` so an open editor rebuilds.
@@ -62,4 +65,4 @@ auval -v aufx Mclc Mucu                                   # AU validation (macOS
 - JUCE code style: 4 spaces, a space before `(`, `juce::` prefixes, no exceptions for control flow.
 - New formula → `Calc.cpp` + a test. New module → subclass `ModuleBase` (including `helpText()` for the **?** panel), add it in `MuculatorEditor::buildModules`, and update `moduleIds` / `moduleNames` and the snapshot tool.
 - Commits from this machine: name `prodairy`, email `344521037+prodairy@users.noreply.github.com`. Never put Claude session links (`claude.ai/code/session_...`) in commit messages or PR descriptions; the owner asked for this. The owner's other public identity (`airy` / `airysocial@pm.me`, used by GitHub web merges) is intentional and fine to leave visible; do not rewrite history to remove it.
-- Work on a branch, open a PR, and let CI pass. Release by tagging `vX.Y.Z` on `main`.
+- Work on a branch, open a PR, and let CI pass. Releasing means tagging `vX.Y.Z` on `main`, but only when the owner explicitly asks (see "Working with the owner").
