@@ -57,10 +57,15 @@ juce_add_binary_data(MuculatorSkinData
         Skins/modular.muskin
         Skins/studio-pro.muskin
         Skins/seashell.muskin
+        Skins/seashell-dark.muskin
         Skins/glaucous.muskin
+        Skins/glaucous-dark.muskin
         Skins/lavender.muskin
+        Skins/lavender-dark.muskin
         Skins/lemon.muskin
-        Skins/turquoise.muskin)
+        Skins/lemon-dark.muskin
+        Skins/turquoise.muskin
+        Skins/turquoise-dark.muskin)
 set_target_properties(MuculatorSkinData PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
 set(MUCULATOR_UI_SOURCES

@@ -4,7 +4,7 @@ A skin changes how Muculator looks: colours, button style, corner shapes, panel 
 It never changes what Muculator calculates.
 
 A skin is one small text file with the **`.muskin`** extension. Inside is JSON, so you can open and
-edit it with any text editor. Muculator comes with ten built-in skins, and you can add as many of
+edit it with any text editor. Muculator comes with fifteen built-in skins, and you can add as many of
 your own as you like.
 
 **Studio skins**, inspired by the look of different kinds of studio software:
@@ -18,8 +18,9 @@ your own as you like.
 | **Studio Pro** | Classic desktop studio: graphite, blue accent, soft gradients, glass buttons |
 
 **Colour skins**: minimal and pastel, built from the colour combinations in Sanzo Wada's
-*A Dictionary of Color Combinations* (1930s). Flat buttons, light screens, no texture. The
-combination numbers are in each file's description.
+*A Dictionary of Color Combinations* (1930s). Flat buttons, no texture. Each one comes in a
+light version and a **Dark** version (e.g. *Seashell Dark*), where the pastel colours glow on a
+dark panel. The combination numbers are in each file's description.
 
 | Skin | Colours |
 |---|---|
@@ -42,7 +43,7 @@ starting points to copy.
 
 Click **SKIN** in the top bar, next to the Muculator logo. The menu lists:
 
-- **STUDIO SKINS** and **COLOUR SKINS**: the ten skins above.
+- **STUDIO SKINS** and **COLOUR SKINS**: the built-in skins above.
 - **MY SKINS**: every `.muskin` file in your skins folder.
 - **Open skins folder**: opens the folder where your own skins go (it is created if needed).
 - **Reload skins**: reads the folder again. Use it after adding or editing a file; Muculator stays open.
@@ -151,7 +152,8 @@ A `.muskin` file is a JSON object. Every key is optional: anything left out keep
 | `format` | Always `1` for now. |
 | `name` | Name shown in the SKIN menu. If missing, the file name is used. |
 | `author`, `description` | Free text, for people who share skins. |
-| `base` | Optional: a built-in skin to start from instead of Console: `console`, `pattern`, `session`, `modular`, `studio-pro`, `seashell`, `glaucous`, `lavender`, `lemon` or `turquoise`. Useful for small variations, e.g. `{ "base": "modular", "colors": { "accent": "#00c2ff" } }`. |
+| `base` | Optional: a built-in skin to start from instead of Console: `console`, `pattern`, `session`, `modular`, `studio-pro`, `seashell`, `glaucous`, `lavender`, `lemon` or `turquoise`, or a dark
+colour skin such as `seashell-dark`. Useful for small variations, e.g. `{ "base": "modular", "colors": { "accent": "#00c2ff" } }`. |
 
 ### `colors`
 
@@ -219,7 +221,9 @@ off long labels.
 - Light skins need darker LED colours on their light screens (see Session and the colour skins).
 - Want colours that go together? Pick a combination from Sanzo Wada's book (see above). For a
   pastel skin, use very light tints of the combination for `panel` and `screen`, the pastel
-  colours themselves for the `cap` colours, and deeper tones of them for the LED colours.
+  colours themselves for the `cap` colours, and deeper tones of them for the LED colours. For a
+  dark pastel skin, use a dark grey tinted with the palette for `panel` and `screen`, and the
+  pastel colours themselves for the LED and `cap` colours.
 - Test every screen: the Pitch module's HARMONICS tab, a help panel (**?**) and an invalid BPM
   (type `0`) show most colours at once.
 - Muculator never crashes on a bad file. An unreadable file shows as "(unreadable file)" in the

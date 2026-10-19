@@ -34,7 +34,7 @@ auval -v aufx Mclc Mucu                                   # AU validation (macOS
 | `Source/Modules/*Module.cpp` | One module each: Reverb, Delay, Compressor, Pitch (4 tabs), Converter, Loop. All declared in `Modules.h`. |
 | `Source/UI/Skin.*` | `Skin` (every colour, button style, corner, texture, font), `.muskin` JSON parser, `SkinManager` (built-in + user skins, saved choice). `ui::skin()` is the current skin. |
 | `Source/UI/ConsoleLookAndFeel.*` | Draws everything from `ui::skin()`: fonts, `drawSection`, `drawScreen`, `drawLed`, the four button styles. |
-| `Skins/*.muskin` | Built-in skins, embedded with `juce_add_binary_data`: 5 studio skins and 5 minimal pastel colour skins from Sanzo Wada's *A Dictionary of Color Combinations* (`SkinManager::colourSkinIds`). Format and the Claude prompt: `docs/SKINS.md`. |
+| `Skins/*.muskin` | Built-in skins, embedded with `juce_add_binary_data`: 5 studio skins and 5 minimal pastel colour skins (each with a `-dark` version) from Sanzo Wada's *A Dictionary of Color Combinations* (`SkinManager::colourSkinIds`). Format and the Claude prompt: `docs/SKINS.md`. |
 | `Source/UI/Widgets.*` | `IllumButton`, `ChainButton`, `LedField` (drag / wheel via `setNudger`), `NotePicker`, `LedReadout`, `LedTable` (scrolls; click copies a value), `WarningPanel`, `HelpPanel`, `ButtonGroup`. |
 | `Source/PluginEditor.*` | Top bar (SKIN menu, BPM, TAP, CHAIN, HOST SYNC), module switcher, implements `ModuleContext`. |
 | `Source/PluginProcessor.*` | Pass-through audio; reads host BPM and sample rate into atomics; stores state as a ValueTree. |

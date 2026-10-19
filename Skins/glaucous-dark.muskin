@@ -1,0 +1,46 @@
+{
+  "format": 1,
+  "name": "Glaucous Dark",
+  "author": "Muculator",
+  "description": "Glaucous green, seashell pink and citron yellow on dark sage (combination 150). Minimal pastel skin, dark version; colours from Sanzo Wada, A Dictionary of Color Combinations.",
+  "colors": {
+    "panel": "#222a26",
+    "panelDark": "#1b221f",
+    "panelEdge": "#121815",
+    "recess": "#28312c",
+    "accent": "#b4cdc2",
+    "text": "#e6eee9",
+    "textDim": "#93a49b",
+    "highlight": "#dfe09a",
+    "screen": "#251f1c",
+    "screenEdge": "#181412",
+    "screenText": "#9a8a80",
+    "ledRed": "#f3a99b",
+    "ledAmber": "#e6e3a0",
+    "ledGreen": "#b4d9c6",
+    "ledBlue": "#b7cbe0",
+    "capRed": "#f3b9ad",
+    "capYellow": "#dfe09a",
+    "capGreen": "#b4cdc2",
+    "capBlue": "#b7cbe0",
+    "capWhite": "#b4cdc2",
+    "capOrange": "#fdd4bd",
+    "buttonFace": "#313b36",
+    "buttonText": "#e6eee9",
+    "litText": "#1b221f"
+  },
+  "style": {
+    "buttons": "flat",
+    "texture": "flat",
+    "buttonCorner": 4,
+    "sectionCorner": 6,
+    "screenCorner": 4,
+    "accentStripe": 2,
+    "screws": false,
+    "screenGlare": false
+  },
+  "fonts": {
+    "label": "",
+    "led": ""
+  }
+}
