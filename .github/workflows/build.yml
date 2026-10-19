@@ -68,7 +68,7 @@ jobs:
           path: Muculator-Windows-*.zip
 
   macos:
-    runs-on: macos-latest
+    runs-on: macos-15  # macos-latest jobs got no runner on 2026-10-19
     steps:
       - uses: actions/checkout@v5
       - name: Configure
