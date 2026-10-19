@@ -1,0 +1,46 @@
+{
+  "format": 1,
+  "name": "Session",
+  "author": "Muculator",
+  "description": "Minimal clip-based studio: flat light grey, thin lines, light screens, yellow and orange accents.",
+  "colors": {
+    "panel": "#c4c4c4",
+    "panelDark": "#b0b0b0",
+    "panelEdge": "#8a8a8a",
+    "recess": "#bababa",
+    "accent": "#ff9f1a",
+    "text": "#1c1c1c",
+    "textDim": "#4f4f4f",
+    "highlight": "#b05a00",
+    "screen": "#e2e2e2",
+    "screenEdge": "#8a8a8a",
+    "screenText": "#666666",
+    "ledRed": "#d42a20",
+    "ledAmber": "#b85400",
+    "ledGreen": "#1d7f36",
+    "ledBlue": "#1d63c4",
+    "capRed": "#ff5a4a",
+    "capYellow": "#ffd326",
+    "capGreen": "#5fd068",
+    "capBlue": "#5ab0ff",
+    "capWhite": "#fafafa",
+    "capOrange": "#ff9f1a",
+    "buttonFace": "#d6d6d6",
+    "buttonText": "#1c1c1c",
+    "litText": "#111111"
+  },
+  "style": {
+    "buttons": "flat",
+    "texture": "flat",
+    "buttonCorner": 1.5,
+    "sectionCorner": 2,
+    "screenCorner": 1.5,
+    "accentStripe": 2,
+    "screws": false,
+    "screenGlare": false
+  },
+  "fonts": {
+    "label": "",
+    "led": ""
+  }
+}

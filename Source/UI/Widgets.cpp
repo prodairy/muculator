@@ -19,7 +19,7 @@ juce::String copyableValue (const juce::String& shown)
 }
 
 //==============================================================================
-IllumButton::IllumButton (const juce::String& text, juce::Colour cap, bool toggles)
+IllumButton::IllumButton (const juce::String& text, Cap cap, bool toggles)
     : juce::TextButton (text)
 {
     setCap (cap);
@@ -28,9 +28,9 @@ IllumButton::IllumButton (const juce::String& text, juce::Colour cap, bool toggl
     ticker.owner = this;
 }
 
-void IllumButton::setCap (juce::Colour c)
+void IllumButton::setCap (Cap c)
 {
-    getProperties().set ("cap", (juce::int64) c.getARGB());
+    getProperties().set ("cap", (int) c);
     repaint();
 }
 
@@ -53,7 +53,7 @@ void IllumButton::Ticker::timerCallback()
 }
 
 //==============================================================================
-ChainButton::ChainButton() : IllumButton ({}, col::capYellow, true)
+ChainButton::ChainButton() : IllumButton ({}, Cap::Yellow, true)
 {
     setTooltip ("CHAIN: when lit, every module uses the same BPM");
 }
@@ -65,7 +65,7 @@ void ChainButton::paintButton (juce::Graphics& g, bool highlighted, bool down)
     const bool lit = getToggleState();
     auto r = getLocalBounds().toFloat().reduced (getWidth() * 0.2f, getHeight() * 0.3f);
     const float lw = r.getWidth() * 0.55f, lh = r.getHeight() * 0.62f, stroke = juce::jmax (2.0f, r.getHeight() * 0.13f);
-    const auto c = lit ? juce::Colour (0xff151515) : col::silkscreen.withAlpha (0.75f);
+    const auto c = lit ? skin().litText : skin().buttonText.withAlpha (0.75f);
 
     g.setColour (c);
     juce::Rectangle<float> left (r.getX(), r.getCentreY() - lh * 0.5f, lw, lh);
@@ -101,10 +101,10 @@ LedField::LedField (const juce::String& cap, const juce::String& u, const juce::
     editor.setSelectAllWhenFocused (true);
     editor.setInputRestrictions (16, allowed);
     editor.setIndents (4, 0);
-    editor.setColour (juce::TextEditor::textColourId, col::ledAmber);
     editor.setColour (juce::TextEditor::backgroundColourId, juce::Colours::transparentBlack);
     editor.setColour (juce::TextEditor::outlineColourId, juce::Colours::transparentBlack);
     editor.setColour (juce::TextEditor::focusedOutlineColourId, juce::Colours::transparentBlack);
+    applyTextColour();
     editor.onTextChange = [this]
     {
         if (boundTree.isValid())
@@ -202,8 +202,14 @@ void LedField::setInvalid (bool b)
     if ((bool) editor.getProperties()["invalid"] == b)
         return;
     editor.getProperties().set ("invalid", b);
-    editor.setColour (juce::TextEditor::textColourId, b ? col::ledRed : col::ledAmber);
-    editor.applyColourToAllText (b ? col::ledRed : col::ledAmber);
+    applyTextColour();
+}
+
+void LedField::applyTextColour()
+{
+    const auto c = (bool) editor.getProperties()["invalid"] ? skin().ledRed : skin().ledAmber;
+    editor.setColour (juce::TextEditor::textColourId, c);
+    editor.applyColourToAllText (c);
     editor.repaint();
 }
 
@@ -230,17 +236,17 @@ void LedField::paint (juce::Graphics& g)
     auto r = getLocalBounds();
     auto top = r.removeFromTop (15);
     g.setFont (labelFont (10.5f));
-    g.setColour (col::silkscreen.withAlpha (0.85f));
+    g.setColour (skin().text.withAlpha (0.85f));
     g.drawText (caption.toUpperCase(), top, juce::Justification::centredLeft);
     if (badge.isNotEmpty())
     {
-        g.setColour (col::capYellow);
+        g.setColour (skin().highlight);
         g.drawText (badge, top, juce::Justification::centredRight);
     }
     if (unit.isNotEmpty())
     {
         g.setFont (labelFont (10.5f, false));
-        g.setColour (col::silkDim);
+        g.setColour (skin().textDim);
         g.drawText (unit, r.removeFromRight (34), juce::Justification::centred);
     }
 }
@@ -306,7 +312,7 @@ void NotePicker::changed()
 void NotePicker::paint (juce::Graphics& g)
 {
     g.setFont (labelFont (10.5f));
-    g.setColour (col::silkscreen.withAlpha (0.85f));
+    g.setColour (skin().text.withAlpha (0.85f));
     g.drawText (caption.toUpperCase(), getLocalBounds().removeFromTop (15), juce::Justification::centredLeft);
 }
 
@@ -379,12 +385,12 @@ void LedReadout::paint (juce::Graphics& g)
         const auto row = areas[i];
         if (flash.isOn ((int) i))
         {
-            g.setColour (col::ledGreen.withAlpha (0.18f));
+            g.setColour (skin().ledGreen.withAlpha (0.18f));
             g.fillRect (row.expanded (6.0f, 0.0f));
         }
         if (line.label.isNotEmpty())
         {
-            g.setColour (col::silkDim);
+            g.setColour (skin().screenText);
             g.setFont (ledFont (lineHeight * 0.55f, false));
             g.drawText (line.label, row, juce::Justification::centredLeft);
         }
@@ -392,7 +398,7 @@ void LedReadout::paint (juce::Graphics& g)
         g.setFont (ledFont (lineHeight * 0.72f * line.scale));
         if (flash.isOn ((int) i))
         {
-            g.setColour (col::ledGreen);
+            g.setColour (skin().ledGreen);
             g.setFont (ledFont (lineHeight * 0.72f));
             g.drawText ("COPIED", row, juce::Justification::centredRight);
         }
@@ -515,11 +521,11 @@ void LedTable::paint (juce::Graphics& g)
 
     auto header = area.removeFromTop (headerHeight());
     g.setFont (labelFont (10.5f));
-    g.setColour (col::silkDim);
+    g.setColour (skin().screenText);
     for (int c = 0; c < headers.size() && c + 1 < (int) xs.size(); ++c)
         g.drawText (headers[c], juce::Rectangle<float> (xs[(size_t) c], header.getY(), xs[(size_t) c + 1] - xs[(size_t) c], header.getHeight()).reduced (3, 0),
                     c == 0 ? juce::Justification::centredLeft : juce::Justification::centredRight);
-    g.setColour (col::silkDim.withAlpha (0.3f));
+    g.setColour (skin().screenText.withAlpha (0.3f));
     g.drawHorizontalLine ((int) header.getBottom(), area.getX(), area.getRight());
 
     const float rh = rowHeight();
@@ -527,10 +533,10 @@ void LedTable::paint (juce::Graphics& g)
     if (scrolls)
     {
         const auto track = barArea.withY (area.getY()).withHeight (rh * (float) visibleRows());
-        g.setColour (col::silkDim.withAlpha (0.15f));
+        g.setColour (skin().screenText.withAlpha (0.15f));
         g.fillRoundedRectangle (track, 1.5f);
         const float n = (float) rows.size();
-        g.setColour (col::ledAmber.withAlpha (0.6f));
+        g.setColour (skin().ledAmber.withAlpha (0.6f));
         g.fillRoundedRectangle (track.withY (track.getY() + track.getHeight() * (float) firstRow / n)
                                      .withHeight (track.getHeight() * (float) visibleRows() / n), 1.5f);
     }
@@ -539,31 +545,31 @@ void LedTable::paint (juce::Graphics& g)
         auto row = area.removeFromTop (rh);
         if (i == recommended)
         {
-            g.setColour (col::ledAmber.withAlpha (0.16f));
+            g.setColour (skin().ledAmber.withAlpha (0.16f));
             g.fillRect (row);
-            g.setColour (col::ledAmber);
+            g.setColour (skin().ledAmber);
             g.fillRect (row.withWidth (3.0f));
         }
         else if (i % 2 == 1)
         {
-            g.setColour (juce::Colours::white.withAlpha (0.025f));
+            g.setColour (skin().screenText.withAlpha (0.04f));
             g.fillRect (row);
         }
         if (selectable && i == hover)
         {
-            g.setColour (juce::Colours::white.withAlpha (0.06f));
+            g.setColour (skin().screenText.withAlpha (0.1f));
             g.fillRect (row);
         }
         if (i == selected)
         {
-            g.setColour (col::ledGreen.withAlpha (0.9f));
+            g.setColour (skin().ledGreen.withAlpha (0.9f));
             g.drawRect (row.reduced (0.5f), 1.5f);
         }
 
         const auto baseColour = rowColours.count (i) ? rowColours[i]
-                              : i == recommended ? col::ledAmber
-                              : i == selected ? col::ledGreen
-                              : col::ledAmber.withAlpha (0.72f);
+                              : i == recommended ? skin().ledAmber
+                              : i == selected ? skin().ledGreen
+                              : skin().ledAmber.withAlpha (0.72f);
         g.setFont (ledFont (juce::jmin (15.5f, rh * 0.68f), i == recommended || i == selected));
         const auto& cells = rows[(size_t) i];
         for (int c = 0; c < cells.size() && c + 1 < (int) xs.size(); ++c)
@@ -572,9 +578,9 @@ void LedTable::paint (juce::Graphics& g)
             const auto just = c == 0 ? juce::Justification::centredLeft : juce::Justification::centredRight;
             if (flash.isOn (i, c))
             {
-                g.setColour (col::ledGreen.withAlpha (0.2f));
+                g.setColour (skin().ledGreen.withAlpha (0.2f));
                 g.fillRect (cell);
-                g.setColour (col::ledGreen);
+                g.setColour (skin().ledGreen);
                 g.drawText ("COPIED", cell.reduced (5, 0), just);
                 continue;
             }
@@ -630,7 +636,7 @@ void WarningPanel::setMessage (const juce::String& t, const juce::String& b, Lev
 void WarningPanel::paint (juce::Graphics& g)
 {
     if (! hasMessage()) return;
-    const auto c = level == Level::Error ? col::ledRed : level == Level::Microtone ? col::ledAmber : col::ledBlue;
+    const auto c = level == Level::Error ? skin().ledRed : level == Level::Microtone ? skin().ledAmber : skin().ledBlue;
     auto r = getLocalBounds().toFloat();
 
     g.setColour (c.withAlpha (level == Level::Microtone ? 0.16f : 0.1f));
@@ -653,7 +659,7 @@ void WarningPanel::paint (juce::Graphics& g)
     }
     if (body.isNotEmpty())
     {
-        g.setColour (c.interpolatedWith (juce::Colours::white, 0.35f));
+        g.setColour (c.interpolatedWith (skin().text, 0.35f));
         g.setFont (ledFont (big ? 14.5f : 12.0f, false));
         g.drawFittedText (body, inner, juce::Justification::topLeft, big ? 5 : 3, 0.8f);
     }
@@ -698,14 +704,14 @@ void HelpPanel::resized()
 void HelpPanel::paint (juce::Graphics& g)
 {
     auto r = getLocalBounds().toFloat();
-    g.setColour (col::panelDark);
+    g.setColour (skin().panelDark);
     g.fillRoundedRectangle (r, 6.0f);
-    g.setColour (col::ledBlue.withAlpha (0.7f));
+    g.setColour (skin().ledBlue.withAlpha (0.7f));
     g.drawRoundedRectangle (r.reduced (1.0f), 6.0f, 1.5f);
 
     auto area = getLocalBounds().reduced (20, 14);
     auto top = area.removeFromTop (26);
-    g.setColour (col::ledBlue);
+    g.setColour (skin().ledBlue);
     g.setFont (labelFont (15.0f));
     g.drawText ("HOW TO USE:  " + title.toUpperCase(), top, juce::Justification::centredLeft);
     area.removeFromTop (10);
@@ -713,9 +719,9 @@ void HelpPanel::paint (juce::Graphics& g)
     if (footer.isNotEmpty())
     {
         auto foot = area.removeFromBottom (36);
-        g.setColour (col::silkDim.withAlpha (0.3f));
+        g.setColour (skin().textDim.withAlpha (0.3f));
         g.fillRect (foot.removeFromTop (1));
-        g.setColour (col::silkDim);
+        g.setColour (skin().textDim);
         g.setFont (labelFont (12.0f, false));
         g.drawFittedText (footer, foot.withTrimmedTop (5), juce::Justification::topLeft, 2, 1.0f);
         area.removeFromBottom (6);
@@ -729,17 +735,17 @@ void HelpPanel::paint (juce::Graphics& g)
         juce::AttributedString as;
         as.setWordWrap (juce::AttributedString::byWord);
         as.setLineSpacing (2.0f);
-        const auto body = col::silkscreen.withAlpha (0.88f);
+        const auto body = skin().text.withAlpha (0.88f);
         for (auto line : juce::StringArray::fromLines (columns[c]))
         {
             if (line.startsWith ("# "))
             {
                 as.append ("\n", labelFont (6.0f, false), body);
-                as.append (line.substring (2).toUpperCase() + "\n", labelFont (13.0f), col::capYellow);
+                as.append (line.substring (2).toUpperCase() + "\n", labelFont (13.0f), skin().highlight);
             }
             else if (line.startsWith ("- ") && line.contains (": "))
             {
-                as.append (line.substring (2).upToFirstOccurrenceOf (": ", true, false), labelFont (14.0f), col::silkscreen);
+                as.append (line.substring (2).upToFirstOccurrenceOf (": ", true, false), labelFont (14.0f), skin().text);
                 as.append (line.fromFirstOccurrenceOf (": ", false, false) + "\n", labelFont (14.0f, false), body);
             }
             else
@@ -753,14 +759,14 @@ void HelpPanel::paint (juce::Graphics& g)
         layout.draw (g, colArea.toFloat());
         if (c > 0)
         {
-            g.setColour (col::silkDim.withAlpha (0.3f));
+            g.setColour (skin().textDim.withAlpha (0.3f));
             g.fillRect (colArea.getX() - gap / 2, colArea.getY(), 1, colArea.getHeight());
         }
     }
 }
 
 //==============================================================================
-ButtonGroup::ButtonGroup (juce::StringArray labels, juce::Colour cap, int radioId, bool v) : vertical (v)
+ButtonGroup::ButtonGroup (juce::StringArray labels, Cap cap, int radioId, bool v) : vertical (v)
 {
     for (int i = 0; i < labels.size(); ++i)
     {

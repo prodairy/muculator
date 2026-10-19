@@ -110,6 +110,63 @@ int main (int argc, char** argv)
     save (*ed, dir, "8_host_paused");
     proc.state.setProperty ("hostSync", false, nullptr);
 
+    // Skins: every built-in file is complete, Console matches the code default, a broken file never crashes.
+    int skinFailures = 0;
+    const auto skinFail = [&skinFailures] (const juce::String& what) { ++skinFailures; std::printf ("FAIL skin: %s\n", what.toRawUTF8()); };
+    {
+        juce::StringArray problems;
+        ui::Skin s, session, out;
+        for (const auto& id : ui::SkinManager::builtInIds())
+        {
+            problems.clear();
+            if (! ui::SkinManager::loadBuiltIn (id, s, problems) || ! problems.isEmpty())
+                skinFail (id + ": " + problems.joinIntoString ("; "));
+        }
+        ui::SkinManager::loadBuiltIn ("console", s, problems);
+        if (s.toJson() != ui::Skin::console().toJson())
+            skinFail ("Skins/console.muskin differs from Skin::console()");
+        if (ui::Skin::parse ("{ not json", ui::Skin::console(), out, problems))
+            skinFail ("invalid JSON was accepted");
+        problems.clear();
+        ui::SkinManager::loadBuiltIn ("session", session, problems);
+        const bool parsed = ui::Skin::parse (R"({ "base": "session", "colors": { "panel": "red", "text": "#123456", "nope": "#000000" },
+                                                  "style": { "buttons": "round", "buttonCorner": 99, "screws": true } })",
+                                             ui::Skin::console(), out, problems);
+        if (! parsed || problems.size() != 4 || out.text != juce::Colour (0xff123456) || out.panel != session.panel
+            || out.buttonCorner != session.buttonCorner || ! out.screws)
+            skinFail ("partial skin: " + juce::String (problems.size()) + " problems: " + problems.joinIntoString ("; "));
+    }
+
+    // Every built-in skin, rendered on a few screens (skin_<id>_*.png)
+    {
+        juce::SharedResourcePointer<ui::SkinManager> skins;
+        ed->setBpmTextFor ("reverb", "120");
+        for (const auto& id : ui::SkinManager::builtInIds())
+        {
+            skins->select (id, false);
+            const auto prefix = "skin_" + id + "_";
+            ed->selectModule (0);
+            save (*ed, dir, prefix + "1_reverb");
+            ed->selectModule (2);
+            save (*ed, dir, prefix + "3_comp");
+            ed->selectModule (3);
+            auto* p = dynamic_cast<PitchModule*> (ed->getModule (3)); // modules are rebuilt on a skin change
+            p->selectTab (1);
+            ed->setBpmTextFor ("pitch", "126");
+            save (*ed, dir, prefix + "4_stretch");
+            ed->setBpmTextFor ("pitch", "120");
+            p->selectTab (3);
+            save (*ed, dir, prefix + "4_harmonics");
+            ed->selectModule (4);
+            save (*ed, dir, prefix + "5_convert");
+            ed->selectModule (1);
+            ed->getModule (1)->showHelp (true);
+            save (*ed, dir, prefix + "2_help");
+            ed->getModule (1)->showHelp (false);
+        }
+        skins->select ("console", false);
+    }
+
     // state round-trip
     juce::MemoryBlock mb;
     proc.getStateInformation (mb);
@@ -117,5 +174,5 @@ int main (int argc, char** argv)
     std::printf ("state bytes: %d\n", (int) mb.getSize());
 
     ed.reset();
-    return copyFailures == 0 ? 0 : 1;
+    return copyFailures + skinFailures == 0 ? 0 : 1;
 }

@@ -1,0 +1,46 @@
+{
+  "format": 1,
+  "name": "Console",
+  "author": "Muculator",
+  "description": "Analog mixing console: grey metal, LED screens, illuminated buttons.",
+  "colors": {
+    "panel": "#3a3d42",
+    "panelDark": "#2a2c30",
+    "panelEdge": "#1a1b1e",
+    "recess": "#202225",
+    "accent": "#e0342a",
+    "text": "#e6e4dc",
+    "textDim": "#9a9890",
+    "highlight": "#f2c200",
+    "screen": "#0a0b0c",
+    "screenEdge": "#000000",
+    "screenText": "#9a9890",
+    "ledRed": "#ff3b2e",
+    "ledAmber": "#ffb020",
+    "ledGreen": "#3dff86",
+    "ledBlue": "#48a8ff",
+    "capRed": "#e0342a",
+    "capYellow": "#f2c200",
+    "capGreen": "#27c24c",
+    "capBlue": "#2f86ff",
+    "capWhite": "#eeeeea",
+    "capOrange": "#ff7a1a",
+    "buttonFace": "#2c2e32",
+    "buttonText": "#e6e4dc",
+    "litText": "#141414"
+  },
+  "style": {
+    "buttons": "glow",
+    "texture": "brushed",
+    "buttonCorner": 3.5,
+    "sectionCorner": 5,
+    "screenCorner": 3,
+    "accentStripe": 3,
+    "screws": true,
+    "screenGlare": true
+  },
+  "fonts": {
+    "label": "",
+    "led": ""
+  }
+}

@@ -45,7 +45,7 @@ void ModuleBase::showErrors (const juce::StringArray& errors)
 void ModuleBase::paint (juce::Graphics& g)
 {
     auto header = getLocalBounds().removeFromTop (30);
-    g.setColour (ui::col::silkscreen);
+    g.setColour (ui::skin().text);
     g.setFont (ui::labelFont (17.0f));
     g.drawText (title.toUpperCase(), header.withTrimmedLeft (4), juce::Justification::centredLeft);
 
@@ -53,7 +53,7 @@ void ModuleBase::paint (juce::Graphics& g)
     {
         auto badge = header.removeFromRight (190).reduced (0, 3);  // resized() leaves 200 px for it
         ui::drawScreen (g, badge.toFloat());
-        g.setColour (ui::col::ledGreen);
+        g.setColour (ui::skin().ledGreen);
         g.setFont (ui::ledFont (14.0f));
         g.drawText (headerBadge, badge, juce::Justification::centred);
     }

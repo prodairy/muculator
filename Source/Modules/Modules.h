@@ -102,7 +102,7 @@ private:
 
     // tuning (shared by every tab)
     ui::LedField a4Field { "A4 reference", "Hz" };
-    ui::IllumButton a4Presets { "...", ui::col::capWhite, false };
+    ui::IllumButton a4Presets { "...", ui::Cap::White, false };
     ui::ButtonGroup spelling;
     double a4 = calc::kA4Hz;
     bool flats = false;
@@ -133,7 +133,7 @@ private:
     ui::LedField eqCentre { "Centre", "Hz" }, eqQ { "Q" }, eqOct { "Bandwidth", "oct" };
     ui::LedReadout eqOut;
     ui::LedField tMs { "Time", "ms" }, tHz { "Frequency", "Hz" }, tSamples { "Samples", "smp" }, tRate { "Sample rate", "Hz" };
-    ui::IllumButton tHostRate { "HOST SR", ui::col::capGreen, true };
+    ui::IllumButton tHostRate { "HOST SR", ui::Cap::Green, true };
     ui::LedReadout tOut;
     ui::LedField dMetres { "Distance", "m" }, dMs { "Delay", "ms" }, dTemp { "Air temp", "C" };
     ui::LedReadout dOut;
@@ -155,7 +155,7 @@ private:
     juce::String helpText() const override;
     ui::LedField bars { "Bars" }, beats { "Beats / bar" }, rate { "Sample rate", "Hz" };
     juce::ComboBox beatUnit;
-    ui::IllumButton hostRate { "HOST SR", ui::col::capGreen, true };
+    ui::IllumButton hostRate { "HOST SR", ui::Cap::Green, true };
     ui::LedReadout out;
     ui::LedTable table;
     juce::Rectangle<int> inputArea, outArea, tableArea;

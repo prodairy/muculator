@@ -1,0 +1,46 @@
+{
+  "format": 1,
+  "name": "Studio Pro",
+  "author": "Muculator",
+  "description": "Classic desktop studio: graphite, blue accent, soft gradients and glass buttons.",
+  "colors": {
+    "panel": "#45474d",
+    "panelDark": "#2e2f34",
+    "panelEdge": "#1b1c1f",
+    "recess": "#2a2b30",
+    "accent": "#3d8bff",
+    "text": "#eaebee",
+    "textDim": "#9c9fa7",
+    "highlight": "#5aa8ff",
+    "screen": "#14161c",
+    "screenEdge": "#08090c",
+    "screenText": "#8b909c",
+    "ledRed": "#ff5a4f",
+    "ledAmber": "#ffb743",
+    "ledGreen": "#5fe38c",
+    "ledBlue": "#5aa8ff",
+    "capRed": "#ff5a4f",
+    "capYellow": "#ffcc33",
+    "capGreen": "#34c759",
+    "capBlue": "#0a84ff",
+    "capWhite": "#f2f2f5",
+    "capOrange": "#ff9f0a",
+    "buttonFace": "#5a5c63",
+    "buttonText": "#eaebee",
+    "litText": "#101114"
+  },
+  "style": {
+    "buttons": "glass",
+    "texture": "gradient",
+    "buttonCorner": 6,
+    "sectionCorner": 7,
+    "screenCorner": 5,
+    "accentStripe": 2,
+    "screws": false,
+    "screenGlare": true
+  },
+  "fonts": {
+    "label": "",
+    "led": ""
+  }
+}

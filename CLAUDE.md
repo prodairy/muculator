@@ -32,7 +32,9 @@ auval -v aufx Mclc Mucu                                   # AU validation (macOS
 | `Source/Calc.{h,cpp}` | All maths. Pure C++, **no JUCE**, unit tested by `Tests/CalcTests.cpp`. |
 | `Source/Modules/ModuleBase.*` | `ModuleContext` (BPM, chain, sample rate, per-module ValueTree) and the `Validator` helper. |
 | `Source/Modules/*Module.cpp` | One module each: Reverb, Delay, Compressor, Pitch (4 tabs), Converter, Loop. All declared in `Modules.h`. |
-| `Source/UI/ConsoleLookAndFeel.*` | Console look: colours (`ui::col`), fonts, `drawSection`, `drawScreen`, `drawLed`. |
+| `Source/UI/Skin.*` | `Skin` (every colour, button style, corner, texture, font), `.muskin` JSON parser, `SkinManager` (built-in + user skins, saved choice). `ui::skin()` is the current skin. |
+| `Source/UI/ConsoleLookAndFeel.*` | Draws everything from `ui::skin()`: fonts, `drawSection`, `drawScreen`, `drawLed`, the four button styles. |
+| `Skins/*.muskin` | Built-in skins, embedded with `juce_add_binary_data`. Format and the Claude prompt: `docs/SKINS.md`. |
 | `Source/UI/Widgets.*` | `IllumButton`, `ChainButton`, `LedField` (drag / wheel via `setNudger`), `NotePicker`, `LedReadout`, `LedTable` (scrolls; click copies a value), `WarningPanel`, `HelpPanel`, `ButtonGroup`. |
 | `Source/PluginEditor.*` | Top bar (BPM, TAP, CHAIN, HOST SYNC), module switcher, implements `ModuleContext`. |
 | `Source/PluginProcessor.*` | Pass-through audio; reads host BPM and sample rate into atomics; stores state as a ValueTree. |
@@ -51,6 +53,7 @@ auval -v aufx Mclc Mucu                                   # AU validation (macOS
 - Only one module is visible at a time. Fixed window size of 1000×680.
 - Reverb pre-delay is snapped to a 1/64 to 1/512 note and is at most 25 % of the total. Room size uses Sabine with 1.59 : 1.26 : 1 proportions.
 - State: modules read and write their own ValueTree child. `setStateInformation` merges into the existing tree and bumps `loadCount` so an open editor rebuilds.
+- Skins: never hard-code a colour; use `ui::skin()`. Buttons take a `ui::Cap` role, not a colour. Text on panels uses `text` / `textDim`, text on screens `screenText` / `led*`. The skin is a per-computer setting (`Muculator.settings` next to the `Skins` folder), not part of the DAW project. `Skins/console.muskin` must match `Skin::console()`; the snapshot tool checks it and renders every built-in skin (`skin_<id>_*.png`).
 - Avoid trademarks in code and docs (no "SSL"; say "console").
 
 ## Conventions

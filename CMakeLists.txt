@@ -46,7 +46,20 @@ juce_add_plugin(Muculator
     NEEDS_WEB_BROWSER FALSE
     NEEDS_CURL FALSE)
 
+# Built-in skins: the same .muskin files users copy and edit (docs/SKINS.md).
+juce_add_binary_data(MuculatorSkinData
+    HEADER_NAME SkinData.h
+    NAMESPACE SkinData
+    SOURCES
+        Skins/console.muskin
+        Skins/pattern.muskin
+        Skins/session.muskin
+        Skins/modular.muskin
+        Skins/studio-pro.muskin)
+set_target_properties(MuculatorSkinData PROPERTIES POSITION_INDEPENDENT_CODE ON)
+
 set(MUCULATOR_UI_SOURCES
+    Source/UI/Skin.cpp
     Source/UI/ConsoleLookAndFeel.cpp
     Source/UI/Widgets.cpp
     Source/Modules/ModuleBase.cpp
@@ -72,7 +85,7 @@ target_compile_definitions(Muculator PUBLIC
     JUCE_DISPLAY_SPLASH_SCREEN=0)
 
 target_link_libraries(Muculator
-    PRIVATE juce::juce_audio_utils
+    PRIVATE juce::juce_audio_utils MuculatorSkinData
     PUBLIC juce::juce_recommended_config_flags
            juce::juce_recommended_lto_flags
            juce::juce_recommended_warning_flags)
@@ -94,4 +107,4 @@ target_compile_definitions(MuculatorSnapshot PRIVATE
     JUCE_WEB_BROWSER=0 JUCE_USE_CURL=0 MUCULATOR_SNAPSHOT=1
     JucePlugin_Name="Muculator")
 target_link_libraries(MuculatorSnapshot PRIVATE
-    juce::juce_audio_utils juce::juce_recommended_config_flags)
+    juce::juce_audio_utils MuculatorSkinData juce::juce_recommended_config_flags)

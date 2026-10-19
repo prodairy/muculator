@@ -53,7 +53,7 @@ protected:
 
 private:
     juce::String id, title;
-    ui::IllumButton helpButton { "?", ui::col::capBlue, true };
+    ui::IllumButton helpButton { "?", ui::Cap::Blue, true };
     ui::HelpPanel help;
 };
 

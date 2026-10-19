@@ -18,7 +18,7 @@ juce::String bpmToText (double bpm)
 
 MuculatorEditor::MuculatorEditor (MuculatorProcessor& p)
     : AudioProcessorEditor (p), proc (p), state (p.state),
-      moduleButtons (moduleNames, col::capWhite, 1, false)
+      moduleButtons (moduleNames, Cap::White, 1, false)
 {
     setLookAndFeel (&lnf);
 
@@ -54,7 +54,10 @@ MuculatorEditor::MuculatorEditor (MuculatorProcessor& p)
         repaint();
     };
 
-    for (auto* c : std::initializer_list<juce::Component*> { &bpmField, &minus, &plus, &tapButton, &chainButton, &hostSync, &moduleButtons })
+    skinButton.setTooltip ("Change the look of Muculator, or load your own .muskin skin files");
+    skinButton.onClick = [this] { showSkinMenu(); };
+
+    for (auto* c : std::initializer_list<juce::Component*> { &bpmField, &minus, &plus, &tapButton, &chainButton, &hostSync, &skinButton, &moduleButtons })
         addAndMakeVisible (c);
 
     moduleButtons.onSelect = [this] (int i) { selectModule (i); };
@@ -62,6 +65,7 @@ MuculatorEditor::MuculatorEditor (MuculatorProcessor& p)
     buildModules();
     selectModule ((int) state.getProperty (moduleId, 3));
     state.addListener (this);
+    skins->addChangeListener (this);
 
     lastSampleRate = hostSampleRate();
     setSize (1000, 680);
@@ -70,6 +74,7 @@ MuculatorEditor::MuculatorEditor (MuculatorProcessor& p)
 
 MuculatorEditor::~MuculatorEditor()
 {
+    skins->removeChangeListener (this);
     state.removeListener (this);
     setLookAndFeel (nullptr);
 }
@@ -102,6 +107,75 @@ void MuculatorEditor::valueTreePropertyChanged (juce::ValueTree& tree, const juc
         buildModules();
         selectModule ((int) state.getProperty (moduleId, 3));
     }
+}
+
+void MuculatorEditor::changeListenerCallback (juce::ChangeBroadcaster*)
+{
+    lnf.applySkin();
+    sendLookAndFeelChange();
+    // Readouts keep the colours they were filled with, so the modules are built again.
+    buildModules();
+    selectModule (current);
+}
+
+void MuculatorEditor::showSkinMenu()
+{
+    enum { openFolder = 1001, reload, saveCopy, guide, nothing };
+    std::vector<ui::SkinManager::Entry> entries;
+    juce::PopupMenu menu;
+    const auto add = [&] (const ui::SkinManager::Entry& e)
+    {
+        entries.push_back (e);
+        auto text = e.name;
+        if (! e.readable)
+            text << "  (unreadable file)";
+        else if (! e.problems.isEmpty())
+            text << "  (" << e.problems.size() << (e.problems.size() == 1 ? " problem)" : " problems)");
+        menu.addItem ((int) entries.size(), text, e.readable, e.id == skins->currentId());
+    };
+
+    menu.addSectionHeader ("BUILT-IN SKINS");
+    for (const auto& e : skins->builtIns())
+        add (e);
+    menu.addSectionHeader ("MY SKINS");
+    for (const auto& e : skins->userSkins())
+        add (e);
+    if (skins->userSkins().empty())
+        menu.addItem (nothing, "No .muskin files in the skins folder yet", false);
+    menu.addSeparator();
+    menu.addItem (openFolder, "Open skins folder");
+    menu.addItem (reload, "Reload skins");
+    menu.addItem (saveCopy, "Save this skin as a new file to edit");
+    menu.addItem (guide, "How to make a skin (opens the web guide)");
+
+    juce::Component::SafePointer<MuculatorEditor> safe (this);
+    menu.showMenuAsync (juce::PopupMenu::Options().withTargetComponent (skinButton), [safe, entries] (int result)
+    {
+        if (safe == nullptr || result == 0)
+            return;
+        auto& sk = *safe->skins;
+        if (result >= 1 && result <= (int) entries.size())
+        {
+            const auto& e = entries[(size_t) result - 1];
+            sk.select (e.id);
+            if (! e.problems.isEmpty())
+                juce::AlertWindow::showMessageBoxAsync (juce::MessageBoxIconType::WarningIcon, "Skin: " + e.name,
+                    "These values could not be used, so the Console values are shown instead:\n\n- "
+                        + e.problems.joinIntoString ("\n- "));
+        }
+        else if (result == openFolder)
+        {
+            const auto folder = ui::SkinManager::skinsFolder();
+            folder.createDirectory();
+            folder.startAsProcess();
+        }
+        else if (result == reload)
+            sk.reload();
+        else if (result == saveCopy)
+            sk.exportCurrent().revealToUser();
+        else if (result == guide)
+            juce::URL ("https://github.com/prodairy/muculator/blob/main/docs/SKINS.md").launchInDefaultBrowser();
+    });
 }
 
 const juce::String& MuculatorEditor::currentId() const { return moduleIds.getReference (current); }
@@ -284,24 +358,35 @@ void MuculatorEditor::updateTopBar()
 //==============================================================================
 void MuculatorEditor::paint (juce::Graphics& g)
 {
-    // console panel
-    juce::ColourGradient bg (col::panel.brighter (0.06f), 0, 0, col::panel.darker (0.25f), 0, (float) getHeight(), false);
-    g.setGradientFill (bg);
-    g.fillAll();
-    juce::Random rng (7);
-    for (int y = 0; y < getHeight(); y += 2) // brushed metal lines
+    const auto& sk = skin();
+    if (sk.texture == Skin::Texture::Flat)
+        g.fillAll (sk.panel);
+    else
     {
-        g.setColour (juce::Colours::white.withAlpha (0.006f + rng.nextFloat() * 0.012f));
-        g.drawHorizontalLine (y, 0, (float) getWidth());
+        juce::ColourGradient bg (sk.panel.brighter (0.06f), 0, 0, sk.panel.darker (0.25f), 0, (float) getHeight(), false);
+        g.setGradientFill (bg);
+        g.fillAll();
+    }
+    if (sk.texture == Skin::Texture::Brushed)
+    {
+        juce::Random rng (7);
+        for (int y = 0; y < getHeight(); y += 2) // brushed metal lines
+        {
+            g.setColour (juce::Colours::white.withAlpha (0.006f + rng.nextFloat() * 0.012f));
+            g.drawHorizontalLine (y, 0, (float) getWidth());
+        }
     }
 
     // top bar
-    g.setColour (col::panelDark);
+    g.setColour (sk.panelDark);
     g.fillRect (topBar);
-    g.setColour (col::panelEdge);
+    g.setColour (sk.panelEdge);
     g.drawHorizontalLine (topBar.getBottom(), 0, (float) getWidth());
-    g.setColour (col::capRed);
-    g.fillRect (topBar.getX(), topBar.getBottom() - 3, getWidth(), 3);
+    if (const int stripe = juce::roundToInt (sk.accentStripe); stripe > 0)
+    {
+        g.setColour (sk.accent);
+        g.fillRect (topBar.getX(), topBar.getBottom() - stripe, getWidth(), stripe);
+    }
 
     for (auto pt : { juce::Point<float> (10, 10), juce::Point<float> ((float) getWidth() - 10, 10),
                      juce::Point<float> (10, (float) getHeight() - 10), juce::Point<float> ((float) getWidth() - 10, (float) getHeight() - 10) })
@@ -309,17 +394,17 @@ void MuculatorEditor::paint (juce::Graphics& g)
 
     // logo
     auto logo = logoArea;
-    g.setColour (col::silkscreen);
+    g.setColour (skin().text);
     g.setFont (labelFont (27.0f));
     g.drawText ("MUCULATOR", logo.removeFromTop (logo.getHeight() * 60 / 100), juce::Justification::bottomLeft);
-    g.setColour (col::silkDim);
+    g.setColour (skin().textDim);
     g.setFont (labelFont (10.0f));
     g.drawText ("PRODUCTION CALCULATOR  /  PASS-THROUGH", logo, juce::Justification::topLeft);
 
     // host tempo readout
     auto h = hostArea;
     g.setFont (labelFont (10.5f));
-    g.setColour (col::silkscreen.withAlpha (0.85f));
+    g.setColour (skin().text.withAlpha (0.85f));
     g.drawText ("HOST TEMPO", h.removeFromTop (15), juce::Justification::centredLeft);
     h.removeFromTop (1);
     drawScreen (g, h.toFloat());
@@ -328,20 +413,20 @@ void MuculatorEditor::paint (juce::Graphics& g)
     const bool paused = hostPaused();
     const bool idle = paused && host > 0; // a tempo arrived before, but the host stopped running the plugin
     auto ledArea = h.removeFromLeft (20).toFloat();
-    drawLed (g, ledArea.withSizeKeepingCentre (8, 8).translated (4, 0), col::ledGreen, synced && host > 0 && ! idle);
+    drawLed (g, ledArea.withSizeKeepingCentre (8, 8).translated (4, 0), skin().ledGreen, synced && host > 0 && ! idle);
     if (idle)
     {
         // Last tempo stays visible but dimmed; the host is not running the plugin right now.
         g.setFont (ledFont (11.0f));
-        g.setColour (col::ledAmber);
+        g.setColour (skin().ledAmber);
         g.drawText ("IDLE", h.removeFromRight (40).withTrimmedRight (6), juce::Justification::centredRight);
     }
     g.setFont (ledFont (17.0f));
-    g.setColour (host <= 0 ? col::silkDim : idle ? col::ledGreen.withAlpha (0.35f) : col::ledGreen);
+    g.setColour (host <= 0 ? skin().screenText : idle ? skin().ledGreen.withAlpha (0.35f) : skin().ledGreen);
     g.drawText (host > 0 ? juce::String (host, 2) : juce::String ("-- no host --"), h.reduced (6, 0), juce::Justification::centred);
 
     // module strip label
-    g.setColour (col::silkDim);
+    g.setColour (skin().textDim);
     g.setFont (labelFont (10.0f));
     g.drawText ("MODULE", moduleStrip.withWidth (60), juce::Justification::centredLeft);
 
@@ -349,7 +434,7 @@ void MuculatorEditor::paint (juce::Graphics& g)
     if (synced && paused)
     {
         // Also shown when no tempo ever arrived: in Logic a silent track never runs the plugin at all.
-        g.setColour (col::ledAmber);
+        g.setColour (skin().ledAmber);
         g.setFont (labelFont (10.5f));
         g.drawText (inLogic ? "HOST IDLE: Logic pauses plugins on tracks that are not playing. "
                               "Put Muculator on the Stereo Out to follow the tempo at all times."
@@ -360,7 +445,7 @@ void MuculatorEditor::paint (juce::Graphics& g)
     }
     const auto a4 = calc::parseInRange (state.getChildWithName ("pitch").getProperty ("a4", "440").toString().toStdString(),
                                         "A4", calc::kMinA4Hz, calc::kMaxA4Hz);
-    g.setColour (col::silkDim);
+    g.setColour (skin().textDim);
     g.setFont (labelFont (10.0f, false));
     g.drawText ("A4 = " + (a4.ok() ? juce::String (*a4.value, 2).trimCharactersAtEnd ("0").trimCharactersAtEnd (".") : juce::String ("--"))
                     + " Hz  |  C4 = MIDI 60  |  audio passes through untouched",
@@ -376,6 +461,7 @@ void MuculatorEditor::resized()
     auto t = topBar.reduced (20, 10);
     t.removeFromBottom (2);
     logoArea = t.removeFromLeft (290);
+    skinButton.setBounds (logoArea.removeFromRight (64).withTrimmedTop (14).withTrimmedRight (12));
 
     hostArea = t.removeFromRight (150);
     t.removeFromRight (12);

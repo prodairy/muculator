@@ -47,6 +47,13 @@ Muculator gives you the new note and frequency. If the result lands **between tw
 
 > Example: an A4 sample at 120 BPM played at 126 BPM → 462 Hz, −15.5 ct from A#4. Use **127.14 BPM** to land on A#4.
 
+### Skins
+
+Click **SKIN** in the top bar to change the look. Five skins are built in: **Console** (default),
+**Pattern**, **Session**, **Modular** and **Studio Pro**. A skin is a small `.muskin` text file, so
+you can make your own, or ask Claude (or another AI assistant) to make one from a description.
+See the [skin guide](docs/SKINS.md).
+
 <details>
 <summary><b>More screenshots</b></summary>
 
@@ -136,6 +143,7 @@ VST is a registered trademark of Steinberg Media Technologies GmbH.
 - **Kolaylıklar:** Her modülde **?** yardım paneli; bir değere tıklayınca panoya kopyalanır; BPM ekranı sürükleyerek ya da tekerlekle değişir (Shift ile 0.1 adım); `T` tuşu TAP yapar.
 - **Converters:** dB ↔ gain, Q ↔ oktav ↔ Hz, ms ↔ Hz ↔ sample, mesafe ↔ ms.
 - **Loop:** Bar sayısından ms, saniye ve sample sayısı.
+- **Skin'ler:** Üst bardaki **SKIN** düğmesiyle görünüm değişir: Console, Pattern, Session, Modular, Studio Pro. Skin, `.muskin` uzantılı küçük bir metin dosyasıdır; kendin yapabilir ya da [skin rehberini](docs/SKINS.md) Claude'a verip istediğin görünümü anlatarak yaptırabilirsin.
 
 **Stretch:** Eski BPM'i, eski notayı ve yeni BPM'i girersin; yeni notayı ve frekansı verir. Sonuç iki notanın arasında kalırsa **MİKROTON UYARISI** gösterir ve notaya tam oturması için hangi BPM'i kullanman gerektiğini yazar.
 

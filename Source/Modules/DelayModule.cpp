@@ -19,7 +19,7 @@ void DelayModule::refresh()
     {
         showErrors ({ str (b.error) });
         table.setRows ({});
-        summary.setLines ({ { {}, "Enter a valid BPM", col::ledRed } });
+        summary.setLines ({ { {}, "Enter a valid BPM", skin().ledRed } });
         return;
     }
     showErrors ({});
@@ -41,12 +41,12 @@ void DelayModule::refresh()
     table.setRecommendedRow (2); // quarter note = the beat
 
     summary.setLines ({
-        { "BPM", str (calc::fmt (v, 2)), col::ledGreen, 1.2f },
+        { "BPM", str (calc::fmt (v, 2)), skin().ledGreen, 1.2f },
         { "1 BEAT (1/4)", str (calc::fmtMs (calc::quarterMs (v))) + " ms" },
         { "1 BAR (4/4)", str (calc::fmtMs (calc::wholeNoteMs (v))) + " ms" },
         { "BEAT RATE", str (calc::fmtHz (v / 60.0)) + " Hz" },
-        { "", "D = x1.5   T = x2/3", col::silkDim },
-        { "", "Hz = LFO / mod rate", col::silkDim },
+        { "", "D = x1.5   T = x2/3", skin().screenText },
+        { "", "Hz = LFO / mod rate", skin().screenText },
     });
 }
 
