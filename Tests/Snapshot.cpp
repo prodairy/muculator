@@ -27,6 +27,22 @@ int main (int argc, char** argv)
         save (*ed, dir, names[i]);
     }
 
+    // Loop: LENGTH > BPM (a 7.742 s loop of 4 bars = 124 BPM)
+    {
+        ed->selectModule (5);
+        auto loopState = proc.state.getOrCreateChildWithName ("loop", nullptr);
+        loopState.setProperty ("length", "7.742", nullptr);
+        proc.state.setProperty ("loadCount", (int) proc.state.getProperty ("loadCount", 0) + 1, nullptr); // rebuilds the modules
+        ed->selectModule (5);
+        auto* loop = dynamic_cast<LoopModule*> (ed->getModule (5));
+        loop->selectMode (1);
+        save (*ed, dir, "6b_loop_to_bpm");
+        loop->showHelp (true);
+        save (*ed, dir, "6c_loop_to_bpm_help");
+        loop->showHelp (false);
+        loop->selectMode (0);
+    }
+
     ed->selectModule (3);
     auto* pitch = dynamic_cast<PitchModule*> (ed->getModule (3));
     const char* tabs[] = { "4a_transpose", "4b_stretch_ok", "4c_freq", "4d_harmonics" };

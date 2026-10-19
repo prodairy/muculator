@@ -85,6 +85,16 @@ const std::vector<int>& delayDenominators()
     return d;
 }
 
+SwingTimes swing (double bpm, int denominator, double percent)
+{
+    SwingTimes s;
+    s.pairMs  = 2.0 * noteMs (bpm, denominator);
+    s.longMs  = s.pairMs * percent / 100.0;
+    s.shortMs = s.pairMs - s.longMs;
+    s.lateMs  = s.longMs - s.pairMs / 2.0;
+    return s;
+}
+
 //==============================================================================
 double midiToFreq (double midi, double a4) { return a4 * std::pow (2.0, (midi - kA4Midi) / 12.0); }
 double freqToMidi (double hz, double a4)   { return kA4Midi + 12.0 * std::log2 (hz / a4); }
@@ -145,6 +155,55 @@ StretchResult stretch (double oldBpm, double oldHz, double newBpm, double thresh
     r.bpmForLower   = bpmFor (r.lowerMidi);
     r.bpmForUpper   = bpmFor (r.upperMidi);
     return r;
+}
+
+TimeStretchResult timeStretch (double oldBpm, double newBpm, double oldLengthMs)
+{
+    TimeStretchResult r;
+    r.speed       = newBpm / oldBpm;
+    r.lengthRatio = oldBpm / newBpm;
+    r.percent     = (r.speed - 1.0) * 100.0;
+    r.newLengthMs = oldLengthMs * r.lengthRatio;
+    // Compare the value as displayed (0.01 %) so the verdict never contradicts the readout.
+    const double shown = std::round (std::abs (r.percent) * 100.0) / 100.0;
+    r.quality = shown <= kStretchCleanPercent ? StretchQuality::Clean
+              : shown <= kStretchWarnPercent  ? StretchQuality::Audible
+                                              : StretchQuality::Extreme;
+    return r;
+}
+
+const std::vector<int>& scaleSteps (Scale s)
+{
+    static const std::vector<int> major { 0, 2, 4, 5, 7, 9, 11 };
+    static const std::vector<int> minor { 0, 2, 3, 5, 7, 8, 10 };
+    return s == Scale::Minor ? minor : major;
+}
+
+bool inScale (int midi, int keyPitchClass, Scale s)
+{
+    const int step = (((midi - keyPitchClass) % 12) + 12) % 12;
+    const auto& steps = scaleSteps (s);
+    return std::find (steps.begin(), steps.end(), step) != steps.end();
+}
+
+std::vector<ScaleFit> scaleFits (double oldBpm, double oldHz, double nearBpm, int keyPitchClass, Scale scale,
+                                 int count, double a4)
+{
+    std::vector<ScaleFit> all;
+    for (int midi = 0; midi <= 131; ++midi)
+    {
+        if (! inScale (midi, keyPitchClass, scale))
+            continue;
+        const double bpm = oldBpm * midiToFreq (midi, a4) / oldHz;
+        if (bpm >= kMinBpm && bpm <= kMaxBpm)
+            all.push_back ({ bpm, midi, 12.0 * std::log2 (bpm / oldBpm) });
+    }
+    const auto distance = [nearBpm] (const ScaleFit& f) { return std::abs (std::log (f.bpm / nearBpm)); };
+    std::stable_sort (all.begin(), all.end(), [&] (const ScaleFit& a, const ScaleFit& b) { return distance (a) < distance (b); });
+    if ((int) all.size() > count)
+        all.resize ((size_t) std::max (0, count));
+    std::sort (all.begin(), all.end(), [] (const ScaleFit& a, const ScaleFit& b) { return a.bpm < b.bpm; });
+    return all;
 }
 
 std::vector<Harmonic> harmonics (double fundamentalHz, int count, HarmonicSet set, double a4, double maxHz)
@@ -314,6 +373,11 @@ double speedOfSound (double celsius)                   { return 331.3 * std::sqr
 double metresToMs (double metres, double celsius)      { return metres / speedOfSound (celsius) * 1000.0; }
 double msToMetres (double ms, double celsius)          { return ms / 1000.0 * speedOfSound (celsius); }
 
+double audioBytes (double seconds, double sampleRate, int bitDepth, int channels)
+{
+    return seconds * sampleRate * (bitDepth / 8.0) * channels;
+}
+
 //==============================================================================
 double barMs (double bpm, double beatsPerBar, double beatUnit)
 {
@@ -323,6 +387,36 @@ double barMs (double bpm, double beatsPerBar, double beatUnit)
 double loopMs (double bpm, double bars, double beatsPerBar, double beatUnit)
 {
     return bars * barMs (bpm, beatsPerBar, beatUnit);
+}
+
+double loopBpm (double lengthMs, double bars, double beatsPerBar, double beatUnit)
+{
+    // loopMs = bars * beatsPerBar * (4 / beatUnit) * 60000 / bpm, solved for bpm
+    return bars * beatsPerBar * 4.0 / beatUnit * 60000.0 / lengthMs;
+}
+
+//==============================================================================
+const std::vector<InstrumentRange>& instrumentRanges()
+{
+    // Typical ranges from common EQ charts; fundamentals follow the playable range of each instrument.
+    static const std::vector<InstrumentRange> r {
+        { "KICK",          40,   100, "click",      2000,  5000 },
+        { "SNARE",        150,   250, "crack",      2000,  6000 },
+        { "TOMS",          70,   300, "attack",     3000,  6000 },
+        { "HI-HAT / CYM", 300,   600, "shimmer",    6000, 16000 },
+        { "BASS GUITAR",   41.2, 392, "growl",       700,  2500 },
+        { "EL. GUITAR",    82.4, 1319, "bite",      1500,  4000 },
+        { "AC. GUITAR",    82.4, 988, "sparkle",    4000, 10000 },
+        { "PIANO",         27.5, 4186, "attack",    2000,  5000 },
+        { "MALE VOCAL",    82.4, 523, "presence",   2000,  5000 },
+        { "FEMALE VOCAL", 175,  1047, "presence",   2500,  6000 },
+        { "VIOLIN",       196,  3520, "brilliance", 2000,  6000 },
+        { "CELLO",         65.4, 988, "bow",        1500,  4000 },
+        { "TRUMPET",      185,  1175, "brass",      1500,  5000 },
+        { "ALTO SAX",     139,   831, "bite",       1500,  4000 },
+        { "FLUTE",        262,  2093, "breath",     3000,  6000 },
+    };
+    return r;
 }
 
 //==============================================================================

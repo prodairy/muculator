@@ -44,6 +44,22 @@ double hzToMs (double hz);
 std::string noteValueLabel (int denominator, NoteKind kind = NoteKind::Normal);
 const std::vector<int>& delayDenominators(); // 1 .. 512
 
+/** Swing: the first note of each pair takes `percent` of the pair (50 = straight, 66.7 = triplet feel). */
+constexpr double kMinSwingPercent = 50.0;
+constexpr double kMaxSwingPercent = 75.0;
+struct SwingTimes
+{
+    double pairMs  = 0;  // two notes of the grid
+    double longMs  = 0;  // first (on-beat) note
+    double shortMs = 0;  // second (off-beat) note
+    double lateMs  = 0;  // how late the off-beat note lands compared with straight time
+};
+SwingTimes swing (double bpm, int denominator, double percent);
+
+/** Haas (precedence) effect: a copy delayed by this much widens a sound without an audible echo. */
+constexpr double kHaasMinMs = 10.0;
+constexpr double kHaasMaxMs = 35.0;
+
 //==============================================================================
 // Pitch. `a4` is the tuning reference in Hz (440 unless the user changes it).
 double midiToFreq (double midi, double a4 = kA4Hz);
@@ -87,6 +103,38 @@ struct StretchResult
 /** Varispeed (tape-style) stretch: changing tempo by factor r changes pitch by factor r. */
 StretchResult stretch (double oldBpm, double oldHz, double newBpm,
                        double thresholdCents = kMicrotoneThresholdCents, double a4 = kA4Hz);
+
+/** Time-stretch (pitch kept): tempo changes above these amounts start to be heard. */
+constexpr double kStretchCleanPercent = 10.0;
+constexpr double kStretchWarnPercent  = 25.0;
+enum class StretchQuality { Clean, Audible, Extreme };
+
+struct TimeStretchResult
+{
+    double speed       = 1;  // new BPM / old BPM
+    double lengthRatio = 1;  // new length / old length = old BPM / new BPM
+    double percent     = 0;  // tempo change in %, +5 = 5 % faster
+    double newLengthMs = 0;
+    StretchQuality quality = StretchQuality::Clean;
+};
+/** Time-stretch: the length follows the tempo, the pitch stays. Quality is judged on the size of the tempo change. */
+TimeStretchResult timeStretch (double oldBpm, double newBpm, double oldLengthMs);
+
+/** Scales for "fit to scale": the semitone steps from the key note. */
+enum class Scale { Major, Minor };
+const std::vector<int>& scaleSteps (Scale);
+bool inScale (int midi, int keyPitchClass, Scale);
+
+struct ScaleFit
+{
+    double bpm       = 0;  // varispeed tempo that lands exactly on `midi`
+    int    midi      = 0;
+    double semitones = 0;  // shift from the old pitch
+};
+/** The `count` varispeed tempos closest to nearBpm that land exactly on a note of the scale,
+    sorted by tempo. Only tempos from kMinBpm to kMaxBpm are listed. */
+std::vector<ScaleFit> scaleFits (double oldBpm, double oldHz, double nearBpm, int keyPitchClass, Scale scale,
+                                 int count = 8, double a4 = kA4Hz);
 
 struct Harmonic { int n; double freq; NoteInfo note; };
 enum class HarmonicSet { All, Odd, Even };
@@ -157,11 +205,26 @@ double samplesToMs (double samples, double sampleRate);
 double speedOfSound (double celsius);      // m/s
 double metresToMs (double metres, double celsius);
 double msToMetres (double ms, double celsius);
+/** Size of uncompressed PCM audio (WAV / AIFF data, header not counted), in bytes. */
+double audioBytes (double seconds, double sampleRate, int bitDepth, int channels);
 
 //==============================================================================
 // Loop / bars
 double barMs (double bpm, double beatsPerBar, double beatUnit);
 double loopMs (double bpm, double bars, double beatsPerBar, double beatUnit);
+/** The tempo at which `bars` bars last lengthMs (the inverse of loopMs). */
+double loopBpm (double lengthMs, double bars, double beatsPerBar, double beatUnit);
+
+//==============================================================================
+// Instrument frequency map (typical ranges, for EQ)
+struct InstrumentRange
+{
+    const char* name;
+    double fundLowHz, fundHighHz;  // range of the fundamental (lowest to highest played note)
+    const char* zone;              // the name of a key zone above it, e.g. "click"
+    double zoneLowHz, zoneHighHz;
+};
+const std::vector<InstrumentRange>& instrumentRanges();
 
 //==============================================================================
 std::string fmt (double v, int decimals);

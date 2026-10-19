@@ -149,14 +149,27 @@ public:
     explicit LoopModule (ModuleContext&);
     void refresh() override;
     void paint (juce::Graphics&) override;
+    /** 0 = bars > length, 1 = length > BPM. */
+    void selectMode (int);
 
 private:
     void layoutContent (juce::Rectangle<int>) override;
     juce::String helpText() const override;
+    void refreshLength (Validator&, const calc::Parsed& bpm, double nBars, double nBeats, double unit, double sr);
+    void refreshBpm (Validator&, double nBars, double nBeats, double unit, std::optional<double> sr);
+    /** The length field in ms, or nothing when it (or the sample rate it needs) is invalid. */
+    std::optional<double> lengthMs (Validator&, std::optional<double> sr);
+    void lengthUnitChanged (int newUnit);
+
+    ui::ButtonGroup mode, lengthUnit;
+    ui::LedField length { "Loop length", "s" };
     ui::LedField bars { "Bars" }, beats { "Beats / bar" }, rate { "Sample rate", "Hz" };
     juce::ComboBox beatUnit;
     ui::IllumButton hostRate { "HOST SR", ui::Cap::Green, true };
+    ui::IllumButton useBpm { "USE AS TEMPO", ui::Cap::Yellow, false };
     ui::LedReadout out;
     ui::LedTable table;
+    double foundBpm = 0;
+    int unitIndex = 0;
     juce::Rectangle<int> inputArea, outArea, tableArea;
 };
